@@ -1,20 +1,6 @@
 # melobudsnext/device.py
-"""
-Comunicacao BLE com o fone, via bleak.
 
-A conexao usa diretamente o endereco MAC (ja pareado no Windows) em vez
-de escanear via BLE - um fone ja pareado e em uso normalmente para de
-anunciar (advertise), entao um scan nao o encontraria de forma
-confiavel. BleakClient.connect() com o endereco conhecido reaproveita
-o pareamento (bond) que o Windows ja tem, sem parear de novo.
-
-IMPORTANTE: os UUIDs de escrita/notificacao (0x1001/0x1002) se repetem
-em mais de um servico do fone (ex: 00007033-... e 0000a001-...). Por
-isso a busca das characteristics precisa ser escopada ao servico certo
-primeiro (client.services.get_service(...).get_characteristic(...)) -
-passar so a string do UUID direto pro bleak gera erro de ambiguidade
-("Multiple Characteristics with this UUID").
-"""
+# Estabelece conexão e realiza a comunicação
 
 from bleak import BleakClient
 
@@ -47,6 +33,7 @@ class MelobudsDevice:
         self._char_write = None
         self._char_notify = None
 
+    # Inicia conexão
     async def connect(self) -> None:
         # Conecta direto pelo MAC - usa o pareamento ja existente no
         # Windows, nao inicia um novo pareamento.
@@ -66,24 +53,26 @@ class MelobudsDevice:
         if self._char_write is None or self._char_notify is None:
             await self.client.disconnect()
             raise ConnectionError(
-                "Characteristics de escrita/notificacao nao encontradas dentro do servico "
                 f"{self.uuid_service}. Confira os UUIDs configurados."
             )
 
         self._connected = True
         await self.client.start_notify(self._char_notify, self._notification_handler)
 
+    # Encerra conexão
     async def disconnect(self) -> None:
         if self._connected:
             await self.client.stop_notify(self._char_notify)
             await self.client.disconnect()
             self._connected = False
 
+    # Envia um report
     async def send_command(self, packet: bytes) -> None:
         if not self._connected:
             raise ConnectionError("Dispositivo nao conectado.")
         await self.client.write_gatt_char(self._char_write, packet, response=False)
 
+    # Recebe notificações do fone
     def _notification_handler(self, sender, data: bytes) -> None:
         parsed = commands.parse_response(data)
         if parsed:

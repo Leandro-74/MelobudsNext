@@ -1,7 +1,6 @@
 # melobudsnext/cli.py
-"""
-Interface de linha de comando (menu numerado) do MelobudsNext.
-"""
+
+# Interface de linha de comando (menu numerado) do MelobudsNext.
 
 import asyncio
 
@@ -26,16 +25,8 @@ ANC_MENU = """
 3. Transparencia
 """
 
-
+# Pede MAC e UUIDs, aproveitando pareamento do sistema
 def _configurar_dispositivo() -> dict:
-    """
-    Pede o MAC e os UUIDs de comunicacao diretamente - sem escanear via
-    BLE. Isso e necessario porque um fone ja pareado e conectado (em uso
-    normal) geralmente para de anunciar (advertise) via BLE, entao o
-    scanner nao o encontraria mesmo estando disponivel. Conectar direto
-    pelo MAC reaproveita o pareamento que o Windows ja tem, sem parear
-    de novo.
-    """
     print("\nO fone precisa ja estar pareado com o Windows (Configuracoes > Dispositivos > Bluetooth).")
     endereco = input(
         f"Endereco MAC do fone (Enter para usar {device.DEFAULT_ADDRESS}): "
@@ -59,7 +50,7 @@ def _configurar_dispositivo() -> dict:
         "uuid_notify": uuid_notify,
     }
 
-
+# Interativo para Ativar/Desativar o Game Mode
 async def _acao_game_mode(dev: "device.MelobudsDevice") -> None:
     escolha = input("Ativar (1) ou Desativar (2) Game Mode? ").strip()
     if escolha == "1":
@@ -71,7 +62,7 @@ async def _acao_game_mode(dev: "device.MelobudsDevice") -> None:
     else:
         print("Opcao invalida.")
 
-
+# Interativo para alterar modo ANC
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     print(ANC_MENU)
     escolha = input("Escolha o modo: ").strip()
@@ -88,7 +79,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     await dev.send_command(pacote)
     print(f"Comando enviado: modo ANC '{nome}'.")
 
-
+# Estabelece conexão usando o address e os UUIDs coletados
 async def _conectar(cfg: dict) -> "device.MelobudsDevice":
     dev = device.MelobudsDevice(
         cfg["address"],
@@ -101,7 +92,7 @@ async def _conectar(cfg: dict) -> "device.MelobudsDevice":
     print("Conectado!\n")
     return dev
 
-
+# roda a interface e faz encaminhamento das funções
 async def run() -> None:
     cfg = config.load_config()
     if cfg is None or "address" not in cfg:
@@ -137,7 +128,6 @@ async def run() -> None:
     finally:
         await dev.disconnect()
 
-
+# Wrapper sincrono - usado como entry_point (console_scripts nao aceita corrotina direto)
 def main() -> None:
-    """Wrapper sincrono - usado como entry_point (console_scripts nao aceita corrotina direto)."""
     asyncio.run(run())
