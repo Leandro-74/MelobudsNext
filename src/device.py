@@ -1,6 +1,7 @@
 # src/device.py
 import asyncio
 from bleak import BleakClient, BleakScanner
+from bleak.exc import BleakError
 from . import commands
 
 # UUIDs extraidos
@@ -37,3 +38,25 @@ class MelobudsDevice:
     # TESTE: printa uma notificação do fone, será feito parse para bateria/status
     def _notification_handler(self, sender, data):
         print(f"  [Resposta Fone] {data.hex('-').upper()}")
+
+    @property
+    def is_connected(self) -> bool:
+        return self.client.is_connected
+
+    async def connect(self):
+        try:
+            await self.client.connect()
+            self._connected = True
+            await self.client.start_notify(UUID_NOTIFY, self._notification_handler)
+        except BleakError as e:
+            self._connected = False
+            raise ConnectionError(f"Falha BLE: {e}") from e
+
+    async def disconnect(self):
+        if self._connected:
+            try:
+                await self.client.stop_notify(UUID_NOTIFY)
+                await self.client.disconnect()
+            except Exception:
+                pass # Ignora erros ao desconectar
+            self._connected = False

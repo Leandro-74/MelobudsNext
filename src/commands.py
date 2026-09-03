@@ -21,3 +21,14 @@ def game_mode(enable: bool) -> bytes:
 # Função para alterar modo ANC
 def anc_mode(mode: int) -> bytes:
     return build_packet(CMD_ANC, [0x03, mode, 0x00, 0x00])
+
+def anc_off() -> bytes:
+    return bytes([0xFF, 0x05, 0x17, 0x03, 0x00, 0x00, 0x00])
+
+def anc_on() -> bytes:
+    # ANC Padrão (Nível 1)
+    return bytes([0xFF, 0x05, 0x17, 0x03, 0x01, 0x01, 0x00])
+
+def anc_transparency() -> bytes:
+    # Modo Transparência
+    return bytes([0xFF, 0x05, 0x17, 0x03, 0x03, 0x02, 0x00])
