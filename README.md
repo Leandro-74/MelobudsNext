@@ -1,10 +1,16 @@
-# MelobudsNext
+<p align="center">
+  <img src="assets/logo.png" alt="Logo do MelobudsNext" width="120">
+</p>
 
-Ferramenta em Python para controlar o fone de ouvido **QCY Melobuds Pro** via Bluetooth Low Energy (BLE) — sem depender do app oficial.
+<h1 align="center">MelobudsNext</h1>
 
-O protocolo foi mapeado por engenharia reversa, capturando o tráfego BLE com o app **nRF Connect** enquanto o app oficial era usado.
+<p align="center">
+  Ferramenta em Python para controlar o fone de ouvido <b>QCY Melobuds Pro<b> via Bluetooth Low Energy (BLE) — sem depender do app oficial.
+</p>
 
 > ⚠️ Projeto não-oficial, feito por engenharia reversa. Sem vínculo com a QCY. Use por sua conta e risco.
+
+O protocolo foi mapeado por engenharia reversa, capturando o tráfego BLE com o app **nRF Connect** enquanto o app oficial era usado.
 
 ## Status atual
 
