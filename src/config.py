@@ -1,7 +1,7 @@
 # melobudsnext/config.py
 """
-Carrega e salva a configuracao (endereco MAC do fone) em um arquivo
-JSON na pasta do usuario.
+Carrega e salva a configuracao (endereco MAC + UUIDs de comunicacao)
+em um arquivo JSON na pasta do usuario.
 """
 
 import json
@@ -23,10 +23,15 @@ def load_config() -> dict | None:
         return None
 
 
-def save_device(address: str, name: str | None = None) -> None:
-    """Salva o endereco (e nome, se disponivel) do fone identificado."""
+def save_device(address: str, uuid_service: str, uuid_write: str, uuid_notify: str) -> None:
+    """Salva o endereco MAC e os UUIDs de comunicacao do fone."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    data = {"address": address, "name": name}
+    data = {
+        "address": address,
+        "uuid_service": uuid_service,
+        "uuid_write": uuid_write,
+        "uuid_notify": uuid_notify,
+    }
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
