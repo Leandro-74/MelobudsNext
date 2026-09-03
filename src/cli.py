@@ -14,7 +14,7 @@ MENU = """
 
 1. Ativar/Desativar Game Mode
 2. Alterar modo ANC
-3. Reconfigurar fone (buscar dispositivo)
+3. Reconfigurar fone (MAC/UUIDs)
 4. Sair
 """
 
@@ -27,27 +27,37 @@ ANC_MENU = """
 """
 
 
-async def _escolher_dispositivo() -> str:
-    print("Procurando fones por 5 segundos (deixe o fone no modo pareamento se for a primeira vez)...")
-    encontrados = await device.scan_devices(timeout=5.0)
+def _configurar_dispositivo() -> dict:
+    """
+    Pede o MAC e os UUIDs de comunicacao diretamente - sem escanear via
+    BLE. Isso e necessario porque um fone ja pareado e conectado (em uso
+    normal) geralmente para de anunciar (advertise) via BLE, entao o
+    scanner nao o encontraria mesmo estando disponivel. Conectar direto
+    pelo MAC reaproveita o pareamento que o Windows ja tem, sem parear
+    de novo.
+    """
+    print("\nO fone precisa ja estar pareado com o Windows (Configuracoes > Dispositivos > Bluetooth).")
+    endereco = input(
+        f"Endereco MAC do fone (Enter para usar {device.DEFAULT_ADDRESS}): "
+    ).strip() or device.DEFAULT_ADDRESS
 
-    if not encontrados:
-        print("Nenhum dispositivo encontrado na busca.")
-        endereco = input("Digite o endereco MAC manualmente (ex: C4:AC:60:07:68:09): ").strip()
-        config.save_device(endereco)
-        return endereco
+    usar_padrao = input("Usar os UUIDs padrao ja confirmados? [S/n]: ").strip().lower()
+    if usar_padrao == "n":
+        uuid_service = input(f"UUID do servico (Enter para {device.DEFAULT_UUID_SERVICE}): ").strip() or device.DEFAULT_UUID_SERVICE
+        uuid_write = input(f"UUID de escrita (Enter para {device.DEFAULT_UUID_WRITE}): ").strip() or device.DEFAULT_UUID_WRITE
+        uuid_notify = input(f"UUID de notificacao (Enter para {device.DEFAULT_UUID_NOTIFY}): ").strip() or device.DEFAULT_UUID_NOTIFY
+    else:
+        uuid_service = device.DEFAULT_UUID_SERVICE
+        uuid_write = device.DEFAULT_UUID_WRITE
+        uuid_notify = device.DEFAULT_UUID_NOTIFY
 
-    for i, d in enumerate(encontrados, start=1):
-        print(f"{i}. {d.name or '(sem nome)'}  [{d.address}]")
-
-    escolha = input("Escolha o numero do fone: ").strip()
-    if not escolha.isdigit() or not (1 <= int(escolha) <= len(encontrados)):
-        print("Opcao invalida, tentando de novo.")
-        return await _escolher_dispositivo()
-
-    escolhido = encontrados[int(escolha) - 1]
-    config.save_device(escolhido.address, escolhido.name)
-    return escolhido.address
+    config.save_device(endereco, uuid_service, uuid_write, uuid_notify)
+    return {
+        "address": endereco,
+        "uuid_service": uuid_service,
+        "uuid_write": uuid_write,
+        "uuid_notify": uuid_notify,
+    }
 
 
 async def _acao_game_mode(dev: "device.MelobudsDevice") -> None:
@@ -79,9 +89,14 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     print(f"Comando enviado: modo ANC '{nome}'.")
 
 
-async def _conectar(address: str) -> "device.MelobudsDevice":
-    dev = device.MelobudsDevice(address)
-    print(f"Conectando a {address}...")
+async def _conectar(cfg: dict) -> "device.MelobudsDevice":
+    dev = device.MelobudsDevice(
+        cfg["address"],
+        uuid_service=cfg.get("uuid_service", device.DEFAULT_UUID_SERVICE),
+        uuid_write=cfg.get("uuid_write", device.DEFAULT_UUID_WRITE),
+        uuid_notify=cfg.get("uuid_notify", device.DEFAULT_UUID_NOTIFY),
+    )
+    print(f"Conectando a {cfg['address']} (pareamento existente do Windows)...")
     await dev.connect()
     print("Conectado!\n")
     return dev
@@ -91,15 +106,13 @@ async def run() -> None:
     cfg = config.load_config()
     if cfg is None or "address" not in cfg:
         print("Nenhum fone configurado ainda.")
-        address = await _escolher_dispositivo()
-    else:
-        address = cfg["address"]
+        cfg = _configurar_dispositivo()
 
     try:
-        dev = await _conectar(address)
+        dev = await _conectar(cfg)
     except Exception as e:
         print(f"Falha ao conectar: {e}")
-        print("Verifique se o fone esta ligado, proximo e pareado com o computador.")
+        print("Verifique se o fone esta ligado, proximo e pareado nas Configuracoes de Bluetooth do Windows.")
         return
 
     try:
@@ -114,8 +127,8 @@ async def run() -> None:
             elif escolha == "3":
                 await dev.disconnect()
                 config.clear_config()
-                address = await _escolher_dispositivo()
-                dev = await _conectar(address)
+                cfg = _configurar_dispositivo()
+                dev = await _conectar(cfg)
             elif escolha == "4":
                 print("Ate mais!")
                 break
