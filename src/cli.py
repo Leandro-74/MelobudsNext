@@ -1,130 +1,130 @@
+# melobudsnext/cli.py
+"""
+Interface de linha de comando (menu numerado) do MelobudsNext.
+"""
+
 import asyncio
-import sys
+
 from . import config
 from . import device
 from . import commands
-from . import pairing
 
 MENU = """
-=== Melobuds Next - Controle BLE para QCY ===
+=== MelobudsNext - Controle do QCY Melobuds Pro ===
 
-1. Ler Bateria e Status
-2. Game Mode (Ligar/Desligar)
-3. ANC (Modos de Ruído)
-4. Reconfigurar Fone (Pareamento)
-5. Sair
-
+1. Ativar/Desativar Game Mode
+2. Alterar modo ANC
+3. Reconfigurar fone (buscar dispositivo)
+4. Sair
 """
 
-# Tenta conexão, caso falhe, avisa
-async def _ensure_connected(dev: device.MelobudsDevice) -> bool:
-    if dev.is_connected:
-        return True
-        
-    print("Conectando ao fone...")
-    try:
-        await dev.connect()
-        await asyncio.sleep(1.5) 
-        return True
-    except Exception as e:
-        print(f"\n⚠️ Falha ao conectar: {e}")
-        print("Dica: O fone pode estar dormindo ou conectado ao celular.")
-        print("Tire-o da caixa e desconecte o Bluetooth do celular, depois tente novamente.")
-        return False
+ANC_MENU = """
+=== Modo ANC ===
 
-# Lê infos mandadas pelo fone
-async def _acao_ler_status(dev: device.MelobudsDevice):
-    if not await _ensure_connected(dev):
-        return
-    print("Solicitando status da bateria e conectividade...")
-    # O fone geralmente envia notificações de bateria (Cmd 0x16) ao conectar.
-    # Vamos apenas aguardar para que o _notification_handler do device.py as imprima.
-    await asyncio.sleep(2.5)
-    print("(Se nenhuma bateria apareceu acima, o fone pode não suportar leitura direta via GATT)")
+1. Desligado
+2. Cancelamento de Ruido (ANC)
+3. Transparencia
+"""
 
-# Função responsável pelo controle do Game Mode
-async def _acao_game_mode(dev: device.MelobudsDevice):
-    if not await _ensure_connected(dev):
-        return
-        
-    print("\n=== Game Mode ===")
-    print("1. Ligar")
-    print("2. Desligar")
-    escolha = input("Escolha: ").strip()
-    
+
+async def _escolher_dispositivo() -> str:
+    print("Procurando fones por 5 segundos (deixe o fone no modo pareamento se for a primeira vez)...")
+    encontrados = await device.scan_devices(timeout=5.0)
+
+    if not encontrados:
+        print("Nenhum dispositivo encontrado na busca.")
+        endereco = input("Digite o endereco MAC manualmente (ex: C4:AC:60:07:68:09): ").strip()
+        config.save_device(endereco)
+        return endereco
+
+    for i, d in enumerate(encontrados, start=1):
+        print(f"{i}. {d.name or '(sem nome)'}  [{d.address}]")
+
+    escolha = input("Escolha o numero do fone: ").strip()
+    if not escolha.isdigit() or not (1 <= int(escolha) <= len(encontrados)):
+        print("Opcao invalida, tentando de novo.")
+        return await _escolher_dispositivo()
+
+    escolhido = encontrados[int(escolha) - 1]
+    config.save_device(escolhido.address, escolhido.name)
+    return escolhido.address
+
+
+async def _acao_game_mode(dev: "device.MelobudsDevice") -> None:
+    escolha = input("Ativar (1) ou Desativar (2) Game Mode? ").strip()
     if escolha == "1":
         await dev.send_command(commands.game_mode(True))
-        print("✅ Game Mode LIGADO.")
+        print("Comando enviado: Game Mode ativado.")
     elif escolha == "2":
         await dev.send_command(commands.game_mode(False))
-        print("✅ Game Mode DESLIGADO.")
+        print("Comando enviado: Game Mode desativado.")
     else:
-        print("Opção inválida.")
+        print("Opcao invalida.")
 
-# Função responsável pelo controle do ANC
-async def _acao_anc(dev: device.MelobudsDevice):
-    if not await _ensure_connected(dev):
+
+async def _acao_anc(dev: "device.MelobudsDevice") -> None:
+    print(ANC_MENU)
+    escolha = input("Escolha o modo: ").strip()
+    mapa = {
+        "1": ("Desligado", commands.ANC_OFF),
+        "2": ("ANC", commands.ANC_ON),
+        "3": ("Transparencia", commands.ANC_TRANSPARENCY),
+    }
+    opcao = mapa.get(escolha)
+    if opcao is None:
+        print("Opcao invalida.")
         return
-        
-    print("\n=== ANC (Cancelamento de Ruído) ===")
-    print("1. Desligado")
-    print("2. ANC (Ativo)")
-    print("3. Transparência")
-    escolha = input("Escolha: ").strip()
-    
-    if escolha == "1":
-        await dev.send_command(commands.anc_off())
-        print("✅ ANC Desligado.")
-    elif escolha == "2":
-        await dev.send_command(commands.anc_on())
-        print("✅ ANC Ativado.")
-    elif escolha == "3":
-        await dev.send_command(commands.anc_transparency())
-        print("✅ Modo Transparência Ativado.")
-    else:
-        print("Opção inválida.")
+    nome, pacote = opcao
+    await dev.send_command(pacote)
+    print(f"Comando enviado: modo ANC '{nome}'.")
 
-# Roda a interface
-async def run():
+
+async def _conectar(address: str) -> "device.MelobudsDevice":
+    dev = device.MelobudsDevice(address)
+    print(f"Conectando a {address}...")
+    await dev.connect()
+    print("Conectado!\n")
+    return dev
+
+
+async def run() -> None:
     cfg = config.load_config()
-    if cfg is None:
-        print("Nenhuma configuracao encontrada. Vamos parear seu fone.")
-        try:
-            cfg = await pairing.run_wizard()
-        except KeyboardInterrupt:
-            print("\nOperacao cancelada.")
-            sys.exit(0)
+    if cfg is None or "address" not in cfg:
+        print("Nenhum fone configurado ainda.")
+        address = await _escolher_dispositivo()
+    else:
+        address = cfg["address"]
 
-    dev = device.MelobudsDevice(cfg["address"])
-    print(f"\nFone configurado: {cfg.get('name', 'Melobuds')} ({cfg['address']})")
+    try:
+        dev = await _conectar(address)
+    except Exception as e:
+        print(f"Falha ao conectar: {e}")
+        print("Verifique se o fone esta ligado, proximo e pareado com o computador.")
+        return
 
-    while True:
-        print(MENU)
-        escolha = input("Escolha uma opção: ").strip()
+    try:
+        while True:
+            print(MENU)
+            escolha = input("Escolha uma opcao: ").strip()
 
-        try:
             if escolha == "1":
-                await _acao_ler_status(dev)
-            elif escolha == "2":
                 await _acao_game_mode(dev)
-            elif escolha == "3":
+            elif escolha == "2":
                 await _acao_anc(dev)
+            elif escolha == "3":
+                await dev.disconnect()
+                config.clear_config()
+                address = await _escolher_dispositivo()
+                dev = await _conectar(address)
             elif escolha == "4":
-                await dev.disconnect()
-                config.clear_device()
-                try:
-                    cfg = await pairing.run_wizard()
-                    dev = device.MelobudsDevice(cfg["address"])
-                except KeyboardInterrupt:
-                    print("\nOperacao cancelada.")
-            elif escolha == "5":
-                print("Desconectando e saindo...")
-                await dev.disconnect()
+                print("Ate mais!")
                 break
             else:
-                print("Opção inválida.")
-        except Exception as e:
-            print(f"\n❌ Erro durante a operacao: {e}")
-            print("Tente reconectar ou verifique se o fone está ligado.")
-            
-        input("\nPressione Enter para continuar...")
+                print("Opcao invalida.")
+    finally:
+        await dev.disconnect()
+
+
+def main() -> None:
+    """Wrapper sincrono - usado como entry_point (console_scripts nao aceita corrotina direto)."""
+    asyncio.run(run())

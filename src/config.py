@@ -1,40 +1,37 @@
+# melobudsnext/config.py
+"""
+Carrega e salva a configuracao (endereco MAC do fone) em um arquivo
+JSON na pasta do usuario.
+"""
+
 import json
 from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".melobudsnext"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
-# Lê o arquivo de config, caso não existir ou corrompido, devolve {}
-def _read() -> dict:
+
+def load_config() -> dict | None:
+    """Carrega a configuracao salva, ou None se nao existir/estiver vazia."""
     if not CONFIG_FILE.exists():
-        return {}
+        return None
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        return data if data else None
     except (json.JSONDecodeError, OSError):
-        return {}
+        return None
 
-# Escrve no arquivo as configs salvas
-def _write(data: dict) -> None:
+
+def save_device(address: str, name: str | None = None) -> None:
+    """Salva o endereco (e nome, se disponivel) do fone identificado."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    data = {"address": address, "name": name}
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-# Carrega a config salva, ou None caso vazia
-def load_config() -> dict | None:
-    data = _read()
-    return data if data else None
 
-# Salva as infos do fone pareado
-def save_device(address: str, name: str) -> None:
-    data = _read()
-    data.update({
-        "address": address,
-        "name": name,
-    })
-    _write(data)
-
-# Apaga as infos de um fone pareado para forçar um novo escaneamento
-def clear_device() -> None:
+def clear_config() -> None:
+    """Remove a configuracao salva."""
     if CONFIG_FILE.exists():
         CONFIG_FILE.unlink()

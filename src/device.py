@@ -1,13 +1,22 @@
-# src/device.py
-import asyncio
+# melobudsnext/device.py
+"""
+Comunicacao BLE com o fone, via bleak.
+"""
+
 from bleak import BleakClient, BleakScanner
-from bleak.exc import BleakError
+from bleak.backends.device import BLEDevice
+
 from . import commands
 
-# UUIDs extraidos
 UUID_SERVICE = "0000a001-0000-1000-8000-00805f9b34fb"
 UUID_WRITE = "00001001-0000-1000-8000-00805f9b34fb"
 UUID_NOTIFY = "00001002-0000-1000-8000-00805f9b34fb"
+
+
+async def scan_devices(timeout: float = 5.0) -> list[BLEDevice]:
+    """Escaneia dispositivos BLE nas proximidades por alguns segundos."""
+    return await BleakScanner.discover(timeout=timeout)
+
 
 class MelobudsDevice:
     def __init__(self, address: str):
@@ -15,48 +24,25 @@ class MelobudsDevice:
         self.client = BleakClient(address)
         self._connected = False
 
-    # Faz a conexão com o fone
-    async def connect(self):
+    async def connect(self) -> None:
         await self.client.connect()
         self._connected = True
-        # Assina as notificacoes para ouvir o fone
         await self.client.start_notify(UUID_NOTIFY, self._notification_handler)
 
-    # Encerra a conexão
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         if self._connected:
             await self.client.stop_notify(UUID_NOTIFY)
             await self.client.disconnect()
             self._connected = False
 
-    # Envia um report
-    async def send_command(self, packet: bytes):
+    async def send_command(self, packet: bytes) -> None:
         if not self._connected:
             raise ConnectionError("Dispositivo nao conectado.")
         await self.client.write_gatt_char(UUID_WRITE, packet, response=False)
 
-    # TESTE: printa uma notificação do fone, será feito parse para bateria/status
-    def _notification_handler(self, sender, data):
-        print(f"  [Resposta Fone] {data.hex('-').upper()}")
-
-    @property
-    def is_connected(self) -> bool:
-        return self.client.is_connected
-
-    async def connect(self):
-        try:
-            await self.client.connect()
-            self._connected = True
-            await self.client.start_notify(UUID_NOTIFY, self._notification_handler)
-        except BleakError as e:
-            self._connected = False
-            raise ConnectionError(f"Falha BLE: {e}") from e
-
-    async def disconnect(self):
-        if self._connected:
-            try:
-                await self.client.stop_notify(UUID_NOTIFY)
-                await self.client.disconnect()
-            except Exception:
-                pass # Ignora erros ao desconectar
-            self._connected = False
+    def _notification_handler(self, sender, data: bytes) -> None:
+        parsed = commands.parse_response(data)
+        if parsed:
+            print(f"  [Fone] {data.hex('-').upper()}  -> cmd={parsed['cmd']} params={parsed['params']}")
+        else:
+            print(f"  [Fone] {data.hex('-').upper()}  (pacote nao reconhecido - possivel tabela de EQ)")
