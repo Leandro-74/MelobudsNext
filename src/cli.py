@@ -9,64 +9,8 @@ from typing import Dict, Optional
 from . import config
 from . import device
 from . import commands
+from . import menu
 from .device import MelobudsDevice
-
-MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - QCY Melobuds Pro        ║
-╠══════════════════════════════════════════╣
-║  1. Ativar/Desativar Game Mode           ║
-║  2. Alterar modo ANC                     ║
-║  3. Consultar estados                    ║
-║  4. Reconfigurar fone (MAC/UUIDs)        ║
-║  5. Sair                                 ║
-╚══════════════════════════════════════════╝
-"""
-ANC_MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - ANC                     ║
-╠══════════════════════════════════════════╣
-║  1. Desligado                            ║
-║  2. Interior                             ║
-║  3. Viagens Diárias                      ║
-║  4. Barulho                              ║
-║  5. Ruído Contra o Vento                 ║
-║  6. Cancelamento Adaptativo              ║
-║  7. Transparência                        ║
-╚══════════════════════════════════════════╝
-"""
-ANC_INTENSE = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - Nível do ANC            ║
-╠══════════════════════════════════════════╣
-║  1. Intensidade 1                        ║
-║  2. Intensidade 2                        ║
-║  3. Intensidade 3                        ║
-╚══════════════════════════════════════════╝
-"""
-TRANSP_MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - Modo Transparência      ║
-╠══════════════════════════════════════════╣
-║  1. Aprimoramento Vocal                  ║
-║  2. Intensidade 1                        ║
-║  3. Intensidade 2                        ║
-║  4. Intensidade 3                        ║
-║  5. Intensidade 4                        ║
-║  6. Intensidade 5                        ║
-║  7. Intensidade 6                        ║
-╚══════════════════════════════════════════╝
-"""
-CONSULT_MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - Consulta de Estado      ║
-╠══════════════════════════════════════════╣
-║  1. Bateria                              ║
-║  2. Versão do firmware                   ║
-║  3. Modo ANC atual                       ║
-║  4. Game Mode atual                      ║
-╚══════════════════════════════════════════╝
-"""
 
 # Pede MAC e UUIDs, aproveitando pareamento do sistema
 def _configurar_dispositivo() -> Dict[str, str]:
@@ -95,7 +39,7 @@ def _configurar_dispositivo() -> Dict[str, str]:
 
 def _escolher_nivel(quantidade: int) -> Optional[int]:
     limpar_tela()
-    print(ANC_INTENSE)
+    print(menu.ANC_INTENSE)
     escolha = input(" Escolha: ").strip()
     if escolha.isdigit() and 1 <= int(escolha) <= 3:
         return int(escolha)
@@ -103,7 +47,7 @@ def _escolher_nivel(quantidade: int) -> Optional[int]:
 
 async def _acao_consultar(dev: MelobudsDevice) -> None:
     limpar_tela()
-    print(CONSULT_MENU)
+    print(menu.CONSULT_MENU)
     escolha = input("  Escolha: ").strip()
     alvos = {
         "1": ("Bateria", commands.CMD_BATTERY),
@@ -134,7 +78,7 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
 # Interativo para alterar modo ANC
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
-    print(ANC_MENU)
+    print(menu.ANC_MENU)
     escolha = input("Escolha o modo: ").strip()
 
     if escolha == "1":
@@ -161,7 +105,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
         comando = commands.anc_cena(cena)
     elif escolha == "7":
         limpar_tela()
-        print(TRANSP_MENU)
+        print(menu.TRANSP_MENU)
         sub = input(" Escolha: ").strip()
         if sub == "1":
             comando = commands.aprimoramento_vocal()
@@ -210,7 +154,7 @@ async def run() -> None:
     try:
         while True:
             limpar_tela()
-            print(MENU)
+            print(menu.MENU)
             escolha = input("Escolha uma opcao: ").strip()
 
             if escolha == "1":
