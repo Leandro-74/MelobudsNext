@@ -47,18 +47,44 @@ def parse_packet(data: bytes) -> List[Command]:
         commands.append(Command(opcode=cmd_id, params=params))
         offset += param_len
 
+def request_data(cmd_id: int) -> Command:
+    return Command(opcode=CMD_REQUEST_DATA, params=[cmd_id])
+
 # Liga/Desliga o Game Mode
 def game_mode(enable: bool) -> bytes:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_GAME_MODE, params=[val])
 
-# Altera o modo ANC (Desligado/ANC ON/Transparência)
-def anc_mode(mode: int, sub_scene: int = 0x00, noise_value: int = 0x00) -> bytes:
-    return Command(opcode=CMD_ANC, params=[mode, sub_scene, noise_value])
+# Desliga o ANC
+def anc_off() -> Command:
+    return Command(opcode=CMD_ANC, params=[0x00, 0x00, 0x00])
+
+# Liga anc conforme cena selecionada
+def anc_cena(cena: int, nivel: int = 1) -> Command:
+    noise = (nivel-1) if cena in CENAS_COM_NIVEL else 0x00
+    return Command(opcode=CMD_ANC, params=[0x01, cena, noise])
+
+# Liga transparência conforme nível selecionado
+def transparencia(nivel: int) -> Command:
+    return Command(opcode=CMD_ANC, params=[0x03, SUB_TRANSPARENCIA, nivel])
+
+def aprimoramento_vocal() -> Command:
+    return Command(opcode=CMD_ANC, params=[0x03, SUB_TRANSPARENCIA, 0x00])
 
 # Comandos
 CMD_GAME_MODE = 0x09
 CMD_ANC = 0x17
-ANC_OFF = anc_mode(0x00, 0x00, 0x00)
-ANC_ON = anc_mode(0x01, 0x01, 0x00)
-ANC_TRANSPARENCY = anc_mode(0x03, 0x02, 0x00)
+CMD_REQUEST_DATA = 0xFE
+CMD_BATTERY = 0x2F
+CMD_VERSION = 0x30
+
+# Cenas ANC (mode = 0x01)
+CENA_INTERIOR = 0x01
+CENA_VIAGENS = 0x02
+CENA_BARULHO = 0x03
+CENA_VENTO = 0x04
+CENA_ADAPTATIVO = 0x05
+CENAS_COM_NIVEL = (CENA_INTERIOR, CENA_BARULHO, CENA_VIAGENS)
+
+# Transparencia (mode = 0x03)
+SUB_TRANSPARENCIA = 0x01
