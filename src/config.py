@@ -4,12 +4,13 @@
 
 import json
 from pathlib import Path
+from typing import Optional, Dict
 
 CONFIG_DIR = Path.home() / ".melobudsnext"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 # Carrega a config salva, ou retorna None se vazia ou não existir
-def load_config() -> dict | None:
+def load_config() -> Optional[Dict[str, str]]:
     if not CONFIG_FILE.exists():
         return None
     try:

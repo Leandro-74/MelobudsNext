@@ -3,18 +3,22 @@
 # Interface de linha de comando (menu numerado) do MelobudsNext.
 
 import asyncio
+from typing import Dict, Optional
 
 from . import config
 from . import device
 from . import commands
+from .device import MelobudsDevice
 
 MENU = """
-=== MelobudsNext - Controle do QCY Melobuds Pro ===
-
-1. Ativar/Desativar Game Mode
-2. Alterar modo ANC
-3. Reconfigurar fone (MAC/UUIDs)
-4. Sair
+╔══════════════════════════════════════════╗
+║   MelobudsNext - QCY Melobuds Pro        ║
+╠══════════════════════════════════════════╣
+║  1. Ativar/Desativar Game Mode           ║
+║  2. Alterar modo ANC                     ║
+║  3. Reconfigurar fone (MAC/UUIDs)        ║
+║  4. Sair                                 ║
+╚══════════════════════════════════════════╝
 """
 
 ANC_MENU = """
@@ -26,7 +30,7 @@ ANC_MENU = """
 """
 
 # Pede MAC e UUIDs, aproveitando pareamento do sistema
-def _configurar_dispositivo() -> dict:
+def _configurar_dispositivo() -> Dict[str, str]:
     print("\nO fone precisa ja estar pareado com o Windows (Configuracoes > Dispositivos > Bluetooth).")
     endereco = input(
         f"Endereco MAC do fone (Enter para usar {device.DEFAULT_ADDRESS}): "
@@ -51,7 +55,7 @@ def _configurar_dispositivo() -> dict:
     }
 
 # Interativo para Ativar/Desativar o Game Mode
-async def _acao_game_mode(dev: "device.MelobudsDevice") -> None:
+async def _acao_game_mode(dev: MelobudsDevice) -> None:
     escolha = input("Ativar (1) ou Desativar (2) Game Mode? ").strip()
     if escolha == "1":
         await dev.send_command(commands.game_mode(True))
@@ -75,14 +79,14 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     if opcao is None:
         print("Opcao invalida.")
         return
-    nome, pacote = opcao
-    await dev.send_command(pacote)
+    nome, comando = opcao
+    await dev.send_command(comando)
     print(f"Comando enviado: modo ANC '{nome}'.")
 
 # Estabelece conexão usando o address e os UUIDs coletados
-async def _conectar(cfg: dict) -> "device.MelobudsDevice":
-    dev = device.MelobudsDevice(
-        cfg["address"],
+async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
+    dev = MelobudsDevice(
+        address=cfg["address"],
         uuid_service=cfg.get("uuid_service", device.DEFAULT_UUID_SERVICE),
         uuid_write=cfg.get("uuid_write", device.DEFAULT_UUID_WRITE),
         uuid_notify=cfg.get("uuid_notify", device.DEFAULT_UUID_NOTIFY),
