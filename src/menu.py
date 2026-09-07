@@ -5,7 +5,7 @@ def _linha(texto: str = "") -> str:
 
 def menu_principal(status: str) -> str:
     return "\n".join([
-        "╔" + "═" * LARGURA + "╗",
+        "\n"+"╔" + "═" * LARGURA + "╗",
         _linha("MelobudsNext - QCY Melobuds Pro"),
         _linha(status),
         "╠" + "═" * LARGURA + "╣",
@@ -19,7 +19,7 @@ def menu_principal(status: str) -> str:
 
 def painel_estado(bateria: str, anc: str, game_mode: str, versao: str) -> str:
     return "\n".join([
-        "╔" + "═" * LARGURA + "╗",
+        "\n"+"╔" + "═" * LARGURA + "╗",
         _linha("MelobudsNext - Estado do Fone"),
         "╠" + "═" * LARGURA + "╣",
         _linha(f"Bateria:   {bateria}"),
@@ -31,7 +31,6 @@ def painel_estado(bateria: str, anc: str, game_mode: str, versao: str) -> str:
         _linha("Enter/outro: voltar ao menu"),
         "╚" + "═" * LARGURA + "╝",
     ])
-
 ANC_MENU = """
 ╔══════════════════════════════════════════╗
 ║   MelobudsNext - ANC                     ║

@@ -93,7 +93,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
             "4": (commands.CENA_BARULHO, "Barulho"),
         }
         cena, nome_cena = cenas[escolha]
-        nivel = _escolher_nivel(3)
+        nivel = await _escolher_nivel(3)
         if nivel is None:
             print(" Opção Inválida.")
             return
@@ -125,7 +125,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
         return
 
     await dev.send_command(comando)
-    print(f"Comando enviado: modo ANC '{nome}'.")
+    await dev.sync_state()
 
 # Estabelece conexão usando o address e os UUIDs coletados
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
