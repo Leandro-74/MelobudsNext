@@ -12,6 +12,10 @@ from . import commands
 from . import menu
 from .device import MelobudsDevice
 
+async def input_async(prompt: str = "") -> str:
+    return await asyncio.to_thread(input, prompt)
+
+
 # Pede MAC e UUIDs, aproveitando pareamento do sistema
 def _configurar_dispositivo() -> Dict[str, str]:
     print("\nO fone precisa ja estar pareado com o Windows (Configuracoes > Dispositivos > Bluetooth).")
@@ -37,35 +41,34 @@ def _configurar_dispositivo() -> Dict[str, str]:
         "uuid_notify": uuid_notify,
     }
 
-def _escolher_nivel(quantidade: int) -> Optional[int]:
+async def _escolher_nivel(quantidade: int) -> Optional[int]:
     limpar_tela()
     print(menu.ANC_INTENSE)
-    escolha = input(" Escolha: ").strip()
+    escolha = (await input_async(" Escolha: ")).strip()
     if escolha.isdigit() and 1 <= int(escolha) <= 3:
         return int(escolha)
     return None
 
 async def _acao_consultar(dev: MelobudsDevice) -> None:
-    limpar_tela()
-    print(menu.CONSULT_MENU)
-    escolha = input("  Escolha: ").strip()
-    alvos = {
-        "1": ("Bateria", commands.CMD_BATTERY),
-        "2": ("Versão", commands.CMD_VERSION),
-        "3": ("Modo ANC", commands.CMD_ANC),
-        "4": ("Game Mode", commands.CMD_GAME_MODE),
-    }
-    opcao = alvos.get(escolha)
-    if opcao is None:
-        print(" Opção inválida.")
-        return
-    nome, cmd_id = opcao
-    print(f" Solicitando {nome}... (a resposta aparece no log abaixo)")
-    await dev.send_command(commands.request_data(cmd_id))
+    while True:
+        limpar_tela()
+        st = dev.state
+        print(menu.painel_estado(
+            bateria=st.battery_line(),
+            anc=st.anc_label(),
+            game_mode=st.game_mode_label(),
+            versao=st.version or "desconhecida",
+        ))
+        escolha = (await input_async(" Escolha: ")).strip()
+        if escolha == "1":
+            await dev.sync_state()
+        else:
+            return
 
 # Interativo para Ativar/Desativar o Game Mode
 async def _acao_game_mode(dev: MelobudsDevice) -> None:
-    escolha = input("Ativar (1) ou Desativar (2) Game Mode? ").strip()
+    escolha = (await input_async("Ativar (1) ou Desativar (2) Game Mode?: ")).strip()
+
     if escolha == "1":
         await dev.send_command(commands.game_mode(True))
         print("Comando enviado: Game Mode ativado.")
@@ -79,7 +82,7 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
     print(menu.ANC_MENU)
-    escolha = input("Escolha o modo: ").strip()
+    escolha = (await input_async("Escolha o modo: ")).strip()
 
     if escolha == "1":
         comando, nome = commands.anc_off(), "Desligado"
@@ -106,7 +109,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     elif escolha == "7":
         limpar_tela()
         print(menu.TRANSP_MENU)
-        sub = input(" Escolha: ").strip()
+        sub = (await input_async(" Escolha: ")).strip()
         if sub == "1":
             comando = commands.aprimoramento_vocal()
             nome = "Transparência (Aprimoramento Vocal)"
@@ -154,7 +157,8 @@ async def run() -> None:
     try:
         while True:
             limpar_tela()
-            print(menu.MENU)
+            await dev.atualizar_bateria()
+            print(menu.menu_principal(dev.state.battery_line()))
             escolha = input("Escolha uma opcao: ").strip()
 
             if escolha == "1":

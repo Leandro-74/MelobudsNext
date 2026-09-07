@@ -1,14 +1,37 @@
-MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - QCY Melobuds Pro        ║
-╠══════════════════════════════════════════╣
-║  1. Ativar/Desativar Game Mode           ║
-║  2. Alterar modo ANC                     ║
-║  3. Consultar estados                    ║
-║  4. Reconfigurar fone (MAC/UUIDs)        ║
-║  5. Sair                                 ║
-╚══════════════════════════════════════════╝
-"""
+LARGURA = 46
+
+def _linha(texto: str = "") -> str:
+    return "║" + (" " + texto).ljust(LARGURA) + "║"
+
+def menu_principal(status: str) -> str:
+    return "\n".join([
+        "╔" + "═" * LARGURA + "╗",
+        _linha("MelobudsNext - QCY Melobuds Pro"),
+        _linha(status),
+        "╠" + "═" * LARGURA + "╣",
+        _linha("1. Ativar/Desativar Game Mode"),
+        _linha("2. Alterar modo ANC"),
+        _linha("3. Consultar estados"),
+        _linha("4. Reconfigurar fone (MAC/UUIDs)"),
+        _linha("5. Sair"),
+        "╚" + "═" * LARGURA + "╝",
+    ])
+
+def painel_estado(bateria: str, anc: str, game_mode: str, versao: str) -> str:
+    return "\n".join([
+        "╔" + "═" * LARGURA + "╗",
+        _linha("MelobudsNext - Estado do Fone"),
+        "╠" + "═" * LARGURA + "╣",
+        _linha(f"Bateria:   {bateria}"),
+        _linha(f"ANC:       {anc}"),
+        _linha(f"Game Mode: {game_mode}"),
+        _linha(f"Versao:    {versao}"),
+        "╠" + "═" * LARGURA + "╣",
+        _linha("1. Atualizar tudo agora (leituras + 0xFE)"),
+        _linha("Enter/outro: voltar ao menu"),
+        "╚" + "═" * LARGURA + "╝",
+    ])
+
 ANC_MENU = """
 ╔══════════════════════════════════════════╗
 ║   MelobudsNext - ANC                     ║
@@ -42,15 +65,5 @@ TRANSP_MENU = """
 ║  5. Intensidade 4                        ║
 ║  6. Intensidade 5                        ║
 ║  7. Intensidade 6                        ║
-╚══════════════════════════════════════════╝
-"""
-CONSULT_MENU = """
-╔══════════════════════════════════════════╗
-║   MelobudsNext - Consulta de Estado      ║
-╠══════════════════════════════════════════╣
-║  1. Bateria                              ║
-║  2. Versão do firmware                   ║
-║  3. Modo ANC atual                       ║
-║  4. Game Mode atual                      ║
 ╚══════════════════════════════════════════╝
 """

@@ -4,8 +4,10 @@
 
 from bleak import BleakClient
 from typing import Optional
+import asyncio
 
 from . import commands
+from .state import DeviceState
 from .commands import Command
 
 # Valores confirmados por engenharia reversa (captura no nRF Connect).
@@ -15,7 +17,10 @@ DEFAULT_ADDRESS = "C4:AC:60:07:68:09"
 DEFAULT_UUID_SERVICE = "0000a001-0000-1000-8000-00805f9b34fb"
 DEFAULT_UUID_WRITE = "00001001-0000-1000-8000-00805f9b34fb"
 DEFAULT_UUID_NOTIFY = "00001002-0000-1000-8000-00805f9b34fb"
+UUID_BATTERY_V1 = "00000008-0000-1000-8000-00805f9b34fb"
+UUID_VERSION_V1 = "00000007-0000-1000-8000-00805f9b34fb"
 
+VERBOSE = False
 
 class MelobudsDevice:
     def __init__(
@@ -29,6 +34,7 @@ class MelobudsDevice:
         self.uuid_service = uuid_service
         self.uuid_write = uuid_write
         self.uuid_notify = uuid_notify
+        self.state = DeviceState()
 
         self.client = BleakClient(address)
         self._connected = False
@@ -67,6 +73,7 @@ class MelobudsDevice:
             self._char_notify,
             self._notification_handler
         )
+        await self.sync_state()
 
     async def disconnect(self) -> None:
         if self._connected:
@@ -87,15 +94,41 @@ class MelobudsDevice:
             packet,
             response=False
         )
+
+    async def sync_state(self) -> None:
+        await self.atualizar_bateria()
+        await self.atualizar_versao()
+        for cmd_id in (commands.CMD_ANC, commands.CMD_GAME_MODE):
+            await self.send_command(commands.request_data(cmd_id))
+            await asyncio.sleep(0.8)  # janela p/ a resposta chegar como notificacao
+
+    async def atualizar_bateria(self) -> bool:
+        try:
+            dados = bytes(await self.client.read_gatt_char(UUID_BATTERY_V1))
+            self.state.aplicar_bateria(dados)
+            return True
+        except Exception:
+            return False
+
+    async def atualizar_versao(self) -> bool:
+        try:
+            dados = bytes(await self.client.read_gatt_char(UUID_VERSION_V1))
+            self.state.aplicar_versao(dados)
+            return True
+        except Exception:
+            return False
     
     def _notification_handler(self, sender, data: bytes) -> None:
-        parsed_commands = commands.parse_packet(data)
-
-        if not parsed_commands:
-            print(f" [Fone] {data.hex('-').upper()} (não reconhecido)")
-            return
-
-        for cmd in parsed_commands:
-            event_name = commands.get_event_name(cmd.opcode)
-            print(f" [Fone] {event_name}: {cmd}")
-
+        try:
+            parsed_commands = commands.parse_packet(data)
+            if not parsed_commands:
+                if VERBOSE:
+                    print(f"  [Fone] {data.hex('-').upper()} (não reconhecido)")
+                return
+            for cmd in parsed_commands:
+                self.state.aplicar(cmd)   # estado ao vivo, em silencio
+                if VERBOSE:
+                    event_name = commands.get_event_name(cmd.opcode)
+                    print(f"  [Fone] {event_name}: {cmd}")
+        except Exception as e:
+            print(f"  [Fone][erro] {data.hex('-').upper()} -> {type(e).__name__}: {e}")

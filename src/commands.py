@@ -46,6 +46,7 @@ def parse_packet(data: bytes) -> List[Command]:
         params = list(data[offset:offset+param_len])
         commands.append(Command(opcode=cmd_id, params=params))
         offset += param_len
+    return commands
 
 def request_data(cmd_id: int) -> Command:
     return Command(opcode=CMD_REQUEST_DATA, params=[cmd_id])
@@ -88,3 +89,15 @@ CENAS_COM_NIVEL = (CENA_INTERIOR, CENA_BARULHO, CENA_VIAGENS)
 
 # Transparencia (mode = 0x03)
 SUB_TRANSPARENCIA = 0x01
+
+EVENT_NAMES = {
+    CMD_GAME_MODE: "Game Mode",
+    CMD_ANC: "Modo ANC",
+    CMD_BATTERY: "Bateria",
+    CMD_VERSION: "Versao",
+    CMD_REQUEST_DATA: "Consulta",
+    0x28: "ANC Wear/Result",
+}
+
+def get_event_name(opcode: int) -> str:
+    return EVENT_NAMES.get(opcode, f"Desconhecido (0x{opcode:02X})")
