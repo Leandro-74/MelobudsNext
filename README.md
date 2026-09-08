@@ -5,29 +5,68 @@
 <h1 align="center">MelobudsNext</h1>
 
 <p align="center">
-  Ferramenta em Python para controlar o fone de ouvido <b>QCY Melobuds Pro<b> via Bluetooth Low Energy (BLE) — sem depender do app oficial.
+  Ferramenta em Python para controlar o fone <b>QCY Melobuds Pro</b> via
+  Bluetooth Low Energy (BLE) — sem depender do app oficial.
 </p>
 
-> ⚠️ Projeto não-oficial, feito por engenharia reversa. Sem vínculo com a QCY. Use por sua conta e risco.
+> ⚠️ Projeto não oficial, construído por engenharia reversa. Sem vínculo com a
+> QCY. Use por sua conta e risco.
 
-O protocolo foi mapeado por engenharia reversa, capturando o tráfego BLE com o app **nRF Connect** enquanto o app oficial era usado.
+## Funcionalidades
 
-## Status atual
+| Funcionalidade | Status |
+| --- | --- |
+| Game Mode (ligar/desligar) | ✅ Validado |
+| ANC completo: Desligado, cenas Interior / Viagens Diárias / Barulho (níveis 1–3), Ruído Contra o Vento e Cancelamento Adaptativo | ✅ Validado |
+| Modo Transparência: intensidades 1–6 + Aprimoramento Vocal | ✅ Validado |
+| Bateria por lado no menu principal | ✅ Validado |
+| Versão do firmware | ✅ Validado |
+| Renomear o fone | ✅ Validado |
+| Personalizar touch | ✅ Validado |
+| Estado ao vivo: mudanças pelo touch ou pelo app oficial refletem na ferramenta | ✅ Validado |
+| Volume, detecção in-ear, auto-desligar, opcodes desconhecidos | 🚧 A explorar |
 
-| Comando | Status |
-|---|---|
-| Game Mode (ligar/desligar) | ✅ Confirmado |
-| ANC (Desligado / Cancelamento de Ruído / Transparência) | ✅ Confirmado |
-| Bateria | ❓ Hipótese (cmd `0x16`) |
-| Versão de firmware | ❓ Hipótese (cmd `0x19`) |
-| Tabela de equalização | ❓ Hipótese (cmd `0x22`, pacote grande) |
-| Comandos `0x10`, `0x14`, `0x1D`, `0x1F`, `0x2C` | ❓ Não identificados |
+## Protocolo validado (firmware 2.0.6)
+
+Canal principal — escrita em `00001001-...`, notificações em `00001002-...`:
+
+```
+[0xFF] [body_len] [cmd] [param_len] [params...]     body_len = 2 + param_len
+```
+
+| Dado | Mecanismo |
+| --- | --- |
+| Game Mode | `0x09` + `01` (on) / `02` (off) |
+| ANC | `0x17` + `[mode, sub, noise]` (cenas abaixo) |
+| Renomear | `0x18` + nome UTF-8; leitura via `0xFE 0x18` (campo de 32 bytes, padding NUL) |
+| Consulta de estado | `0xFE` + cmd (responde para `0x17`, `0x09` e `0x18`) |
+| Bateria | Leitura direta da char `00000008`: `[L, R, estojo]`; bit 7 = carregando, bits 0–6 = nível |
+| Versão | Leitura direta da char `00000007` |
+| Touch | Leitura/escrita direta da char `0000000D`: 10 pares `[key, func]` = 20 bytes |
+
+**Cenas ANC (`0x17`):** desligado = `00 00 00` (o fone *reporta* `02 00 00`);
+mode `01` → sub `01` Interior, `02` Viagens, `03` Barulho (noise `00–02` =
+níveis 1–3), sub `04` Vento e `05` Adaptativo (sem níveis); mode `03`
+Transparência → sub `01`, noise `00` = Aprimoramento Vocal, `01–06` =
+intensidades.
+
+**Touch:** teclas `01–08` (Esq/Dir × 1–4 toques); funções `00–0B`, sendo
+`0x0B` = Modo ANC **neste firmware** (a documentação padrão da QCY diz
+"rediscar"). Desativar o touch = todas as funções `0x00`.
+
+### Particularidades deste firmware (divergências do protocolo QCY padrão)
+
+- `0x0C` (ANC simples) não existe; apenas `0x17`.
+- `0xFE` não responde para bateria/versão — essas vêm de leitura direta.
+- O fone fica mudo em repouso: só fala quando o estado muda.
+- Bateria do estojo sempre reporta `0`.
 
 ## Requisitos
 
 - Python 3.10+
 - Bluetooth habilitado no computador
-- Windows ou Linux (bleak suporta ambos; ainda não testado no Linux neste projeto)
+- Windows (testado); Linux suportado pelo bleak, ainda não testado aqui
+- Fone pareado no sistema operacional e **não conectado** a outro dispositivo
 
 ## Instalação
 
@@ -35,12 +74,8 @@ O protocolo foi mapeado por engenharia reversa, capturando o tráfego BLE com o 
 git clone https://github.com/Leandro-74/MelobudsNext.git
 cd MelobudsNext
 python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-# Linux/macOS
-source .venv/bin/activate
-
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Linux/macOS
 pip install -r requirements.txt
 ```
 
@@ -50,47 +85,60 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Na primeira execução, o programa busca dispositivos BLE por 5 segundos e lista os encontrados para você escolher. O endereço é salvo em `~/.melobudsnext/config.json` e reaproveitado nas próximas execuções.
+Na primeira execução, informe o endereço MAC do fone (ele fica salvo para as
+próximas). O menu principal já nasce com o nome do fone e a bateria por lado:
 
 ```
-=== MelobudsNext - Controle do QCY Melobuds Pro ===
-
-1. Ativar/Desativar Game Mode
-2. Alterar modo ANC
-3. Reconfigurar fone (buscar dispositivo)
-4. Sair
+╔══════════════════════════════════════════════╗
+║ MelobudsNext - Melobuds Pro de Leandro       ║
+║ L: 94% | R: 78%                              ║
+╠══════════════════════════════════════════════╣
+║ 1. Ativar/Desativar Game Mode                ║
+║ 2. Alterar modo ANC                          ║
+║ 3. Consultar estados                         ║
+║ 4. Renomear fone                             ║
+║ 5. Personalizar touch                        ║
+║ 6. Reconfigurar fone (MAC/UUIDs)             ║
+║ 7. Sair                                      ║
+╠══════════════════════════════════════════════╣
+║ Escolha uma opcao:                           ║
+╚══════════════════════════════════════════════╝
 ```
 
 ## Estrutura do projeto
 
 ```
 MelobudsNext/
-├── main.py
-├── pyproject.toml
+├── main.py            # ponto de entrada
 ├── requirements.txt
-├── README.md
-└── melobudsnext/
-    ├── config.py       # persistencia do endereco MAC
-    ├── device.py         # conexao BLE (bleak) e notificacoes
-    ├── commands.py        # montagem/parsing de pacotes do protocolo
-    └── cli.py              # menu numerado (assincrono)
+├── pyproject.toml
+└── src/
+    ├── commands.py    # protocolo: framing, opcodes e fábricas de comandos
+    ├── keys.py        # protocolo de touch (char 0000000D)
+    ├── state.py       # estado ao vivo do fone (nada persistido)
+    ├── device.py      # conexão BLE (bleak), sincronização e leituras diretas
+    ├── menu.py        # desenho das caixas e conteúdo dos menus
+    ├── cli.py         # fluxo da interface e ações
+    └── config.py      # persistência apenas de MAC/UUIDs
 ```
 
-## Como funciona por baixo dos panos
+## Método de engenharia reversa
 
-Os comandos seguem o formato `FF | Length | Cmd | ParamLen | Params...`, enviados via `write_gatt_char` na characteristic de escrita (`00001001-...`) do serviço `0000a001-...`. As respostas do fone chegam por notificação na characteristic `00001002-...`, no mesmo formato.
+Nenhuma funcionalidade entra no código sem validação empírica: scripts de
+laboratório enviam/leem pacotes crus, o **app oficial serve de oráculo** 
+para conferir significados, e só então o mecanismo é integrado à ferramenta.
+Divergências entre documentação de terceiros e bytes observados são sempre
+resolvidas a favor dos bytes.
 
 ## Próximos passos
 
-- Validar as hipóteses de comando (bateria, firmware, EQ) capturando novos logs com o nRF Connect enquanto cada função é usada isoladamente no app oficial
-- Decodificar o pacote grande (`0x22`, ~145 bytes) — provável tabela de equalização
-- Testar no Linux
-- Empacotamento (.exe / Arch), no mesmo estilo do projeto irmão [HuskyNext](https://github.com/Leandro-74/huskynext)
+- Volume (`0x08`), detecção in-ear (`0x06`/`0x2C`), power manager (`0x14`)
+- Explorar opcodes ainda não identificados (`0x10`, `0x1D`, `0x1F`, `0x2C`...)
+- Testes automatizados de parse/montagem de pacotes
+- Testar no Linux e empacotar (.exe / Arch)
 
 ## Contribuindo
 
-Se você também tem um QCY Melobuds Pro, capturas de log validando (ou refutando) as hipóteses acima são muito bem-vindas via issue/PR.
-
-## Licença
-
-<!-- Defina a licença do projeto, ex: MIT -->
+Tem um QCY Melobuds Pro (ou outro modelo QCY) e quer validar/comparar o
+protocolo no seu firmware? Capturas, saídas de laboratório e PRs são muito
+bem-vindos via issue/PR.
