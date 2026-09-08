@@ -1,7 +1,5 @@
 # melobudsnext/cli.py
 
-# Interface de linha de comando (menu numerado) do MelobudsNext.
-
 import asyncio
 import os
 from typing import Dict, Optional
@@ -15,19 +13,25 @@ from .device import MelobudsDevice
 async def input_async(prompt: str = "") -> str:
     return await asyncio.to_thread(input, prompt)
 
+async def perguntar_async(linhas: list, prompt: str) -> str:
+    menu.abrir_caixa(linhas, prompt)
+    valor = await input_async()
+    menu.fechar_caixa()
+    return valor.strip()
 
-# Pede MAC e UUIDs, aproveitando pareamento do sistema
 def _configurar_dispositivo() -> Dict[str, str]:
-    print("\nO fone precisa ja estar pareado com o Windows (Configuracoes > Dispositivos > Bluetooth).")
-    endereco = input(
-        f"Endereco MAC do fone (Enter para usar {device.DEFAULT_ADDRESS}): "
-    ).strip() or device.DEFAULT_ADDRESS
-
-    usar_padrao = input("Usar os UUIDs padrao ja confirmados? [S/n]: ").strip().lower()
+    print("\nO fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
+    endereco = menu.perguntar(
+        ["Endereço MAC do fone", f"Enter para usar {device.DEFAULT_ADDRESS}"],
+        "MAC: ",
+    ) or device.DEFAULT_ADDRESS
+    usar_padrao = menu.perguntar(
+        ["Usar os UUIDs padrão já confirmados?"], "[S/n]: "
+    ).lower()
     if usar_padrao == "n":
-        uuid_service = input(f"UUID do servico (Enter para {device.DEFAULT_UUID_SERVICE}): ").strip() or device.DEFAULT_UUID_SERVICE
+        uuid_service = input(f"UUID do serviço (Enter para {device.DEFAULT_UUID_SERVICE}): ").strip() or device.DEFAULT_UUID_SERVICE
         uuid_write = input(f"UUID de escrita (Enter para {device.DEFAULT_UUID_WRITE}): ").strip() or device.DEFAULT_UUID_WRITE
-        uuid_notify = input(f"UUID de notificacao (Enter para {device.DEFAULT_UUID_NOTIFY}): ").strip() or device.DEFAULT_UUID_NOTIFY
+        uuid_notify = input(f"UUID de notificação (Enter para {device.DEFAULT_UUID_NOTIFY}): ").strip() or device.DEFAULT_UUID_NOTIFY
     else:
         uuid_service = device.DEFAULT_UUID_SERVICE
         uuid_write = device.DEFAULT_UUID_WRITE
@@ -43,9 +47,8 @@ def _configurar_dispositivo() -> Dict[str, str]:
 
 async def _escolher_nivel(quantidade: int) -> Optional[int]:
     limpar_tela()
-    print(menu.ANC_INTENSE)
-    escolha = (await input_async(" Escolha: ")).strip()
-    if escolha.isdigit() and 1 <= int(escolha) <= 3:
+    escolha = await perguntar_async(menu.linhas_nivel(), "Escolha: ")
+    if escolha.isdigit() and 1 <= int(escolha) <= quantidade:
         return int(escolha)
     return None
 
@@ -53,21 +56,23 @@ async def _acao_consultar(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
         st = dev.state
-        print(menu.painel_estado(
-            bateria=st.battery_line(),
-            anc=st.anc_label(),
-            game_mode=st.game_mode_label(),
-            versao=st.version or "desconhecida",
-        ))
-        escolha = (await input_async(" Escolha: ")).strip()
+        escolha = await perguntar_async(
+            menu.linhas_estado(
+                st.battery_line(),
+                st.anc_label(),
+                st.game_mode_label(),
+                st.version or "desconhecida",
+            ),
+            "Escolha: ",
+        )
         if escolha == "1":
             await dev.sync_state()
         else:
             return
 
-# Interativo para Ativar/Desativar o Game Mode
 async def _acao_game_mode(dev: MelobudsDevice) -> None:
-    escolha = (await input_async("Ativar (1) ou Desativar (2) Game Mode?: ")).strip()
+    limpar_tela()
+    escolha = await perguntar_async(menu.linhas_game_mode(), "Escolha: ")
 
     if escolha == "1":
         await dev.send_command(commands.game_mode(True))
@@ -76,13 +81,11 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
         await dev.send_command(commands.game_mode(False))
         print("Comando enviado: Game Mode desativado.")
     else:
-        print("Opcao invalida.")
+        print("Opção inválida.")
 
-# Interativo para alterar modo ANC
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
-    print(menu.ANC_MENU)
-    escolha = (await input_async("Escolha o modo: ")).strip()
+    escolha = await perguntar_async(menu.linhas_anc(), "Escolha o modo: ")
 
     if escolha == "1":
         comando, nome = commands.anc_off(), "Desligado"
@@ -98,18 +101,17 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
             print(" Opção Inválida.")
             return
         comando = commands.anc_cena(cena, nivel)
-        nome = f"{nome_cena} (nivel {nivel})"
+        nome = f"{nome_cena} (nível {nivel})"
     elif escolha in ("5", "6"):
         cenas = {
-            "5": (commands.CENA_VENTO, "Ruído contra o vento"),
+            "5": (commands.CENA_VENTO, "Ruído Contra o Vento"),
             "6": (commands.CENA_ADAPTATIVO, "Cancelamento Adaptativo"),
         }
         cena, nome = cenas[escolha]
         comando = commands.anc_cena(cena)
     elif escolha == "7":
         limpar_tela()
-        print(menu.TRANSP_MENU)
-        sub = (await input_async(" Escolha: ")).strip()
+        sub = await perguntar_async(menu.linhas_transparencia(), "Escolha: ")
         if sub == "1":
             comando = commands.aprimoramento_vocal()
             nome = "Transparência (Aprimoramento Vocal)"
@@ -127,7 +129,6 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     await dev.send_command(comando)
     await dev.sync_state()
 
-# Estabelece conexão usando o address e os UUIDs coletados
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
         address=cfg["address"],
@@ -140,7 +141,6 @@ async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     print("Conectado!\n")
     return dev
 
-# roda a interface e faz encaminhamento das funções
 async def run() -> None:
     cfg = config.load_config()
     if cfg is None or "address" not in cfg:
@@ -151,15 +151,17 @@ async def run() -> None:
         dev = await _conectar(cfg)
     except Exception as e:
         print(f"Falha ao conectar: {e}")
-        print("Verifique se o fone esta ligado, proximo e pareado nas Configuracoes de Bluetooth do Windows.")
+        print("Verifique se o fone está ligado, próximo e pareado nas Configurações de Bluetooth do Windows.")
         return
 
     try:
         while True:
             limpar_tela()
             await dev.atualizar_bateria()
-            print(menu.menu_principal(dev.state.battery_line()))
-            escolha = input("Escolha uma opcao: ").strip()
+            escolha = await perguntar_async(
+                menu.linhas_principal(dev.state.battery_line()),
+                "Escolha uma opção: ",
+            )
 
             if escolha == "1":
                 await _acao_game_mode(dev)
@@ -173,15 +175,15 @@ async def run() -> None:
                 cfg = _configurar_dispositivo()
                 dev = await _conectar(cfg)
             elif escolha == "5":
-                print("Ate mais!")
+                print("Até mais!")
                 break
             else:
-                print("Opcao invalida.")
+                print("Opção inválida.")
     finally:
         await dev.disconnect()
 
 def limpar_tela():
     os.system('cls' if os.name == 'nt' else 'clear')
-# Wrapper sincrono - usado como entry_point (console_scripts nao aceita corrotina direto)
+
 def main() -> None:
     asyncio.run(run())
