@@ -24,6 +24,7 @@ class DeviceState:
     anc: Optional[Tuple[int, int, int]] = None
     game_mode: Optional[bool] = None
     version: Optional[str] = None
+    nome: Optional[str] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"
@@ -62,6 +63,10 @@ class DeviceState:
             self.anc = (cmd.params[0], cmd.params[1], cmd.params[2])
         elif cmd.opcode == commands.CMD_GAME_MODE and len(cmd.params) >= 1:
             self.game_mode = (cmd.params[0] == 0x01)
+        elif cmd.opcode == commands.CMD_RENAME:
+            raw = bytes(cmd.params).rstrip(b"\x00")
+            if raw:
+                self.nome = raw.decode("utf-8", errors="replace")
 
     def aplicar_bateria(self, dados: bytes) -> None:
         if len(dados) >= 2:

@@ -98,9 +98,9 @@ class MelobudsDevice:
     async def sync_state(self) -> None:
         await self.atualizar_bateria()
         await self.atualizar_versao()
-        for cmd_id in (commands.CMD_ANC, commands.CMD_GAME_MODE):
+        for cmd_id in (commands.CMD_ANC, commands.CMD_GAME_MODE, commands.CMD_RENAME):
             await self.send_command(commands.request_data(cmd_id))
-            await asyncio.sleep(0.8)  # janela p/ a resposta chegar como notificacao
+            await asyncio.sleep(0.8)
 
     async def atualizar_bateria(self) -> bool:
         try:

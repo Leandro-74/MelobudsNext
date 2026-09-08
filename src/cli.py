@@ -20,11 +20,13 @@ async def perguntar_async(linhas: list, prompt: str) -> str:
     return valor.strip()
 
 def _configurar_dispositivo() -> Dict[str, str]:
-    print("\nO fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
+    limpar_tela()
+    print("\n O fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
     endereco = menu.perguntar(
         ["Endereço MAC do fone", f"Enter para usar {device.DEFAULT_ADDRESS}"],
         "MAC: ",
     ) or device.DEFAULT_ADDRESS
+    limpar_tela()
     usar_padrao = menu.perguntar(
         ["Usar os UUIDs padrão já confirmados?"], "[S/n]: "
     ).lower()
@@ -129,6 +131,27 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     await dev.send_command(comando)
     await dev.sync_state()
 
+async def _acao_renomear(dev: MelobudsDevice) -> None:
+    limpar_tela()
+    menu.abrir_caixa(
+        menu.linhas_rename(dev.state.nome or "desconhecido"),
+        "Novo nome: ",
+    )
+    novo = (await input_async()).strip()
+    menu.fechar_caixa()
+
+    if not novo:
+        print("  Rename cancelado.")
+        return
+    if len(novo.encode("utf-8")) > 30:
+        print("  Nome muito longo (maximo ~30 caracteres).")
+        return
+
+    comando = commands.rename_device(novo)
+    await dev.send_command(comando)
+    dev.state.aplicar(comando)
+    print(f"  Comando enviado: novo nome '{novo}'.")
+
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
         address=cfg["address"],
@@ -159,7 +182,7 @@ async def run() -> None:
             limpar_tela()
             await dev.atualizar_bateria()
             escolha = await perguntar_async(
-                menu.linhas_principal(dev.state.battery_line()),
+                menu.linhas_principal(dev.state.battery_line(), dev.state.nome),
                 "Escolha uma opção: ",
             )
 
@@ -170,11 +193,13 @@ async def run() -> None:
             elif escolha == "3":
                 await _acao_consultar(dev)
             elif escolha == "4":
+                await _acao_renomear(dev)
+            elif escolha == "5":
                 await dev.disconnect()
                 config.clear_config()
                 cfg = _configurar_dispositivo()
                 dev = await _conectar(cfg)
-            elif escolha == "5":
+            elif escolha == "6":
                 print("Até mais!")
                 break
             else:

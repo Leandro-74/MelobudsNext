@@ -72,12 +72,16 @@ def transparencia(nivel: int) -> Command:
 def aprimoramento_vocal() -> Command:
     return Command(opcode=CMD_ANC, params=[0x03, SUB_TRANSPARENCIA, 0x00])
 
+def rename_device(novo_nome: str) -> Command:
+    return Command(opcode=CMD_RENAME, params=list(novo_nome.encode("utf-8")))
+
 # Comandos
 CMD_GAME_MODE = 0x09
 CMD_ANC = 0x17
 CMD_REQUEST_DATA = 0xFE
 CMD_BATTERY = 0x2F
 CMD_VERSION = 0x30
+CMD_RENAME = 0x18
 
 # Cenas ANC (mode = 0x01)
 CENA_INTERIOR = 0x01
@@ -96,6 +100,7 @@ EVENT_NAMES = {
     CMD_BATTERY: "Bateria",
     CMD_VERSION: "Versao",
     CMD_REQUEST_DATA: "Consulta",
+    CMD_RENAME: "Renomear",
     0x28: "ANC Wear/Result",
 }
 

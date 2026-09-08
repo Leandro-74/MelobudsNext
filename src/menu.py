@@ -1,4 +1,7 @@
 # src/menu.py
+
+from typing import Optional
+
 LARGURA = 46
 ESC = "\x1b"
 
@@ -14,16 +17,27 @@ def _sep() -> str:
 def _fundo() -> str:
     return "╚" + "═" * LARGURA + "╝"
 
-def linhas_principal(status: str) -> list:
+def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
     return [
-        "MelobudsNext - QCY Melobuds Pro",
+        f"MelobudsNext - {nome_fone or 'QCY Melobuds Pro'}",
         status,
         _sep(),
         "1. Ativar/Desativar Game Mode",
         "2. Alterar modo ANC",
         "3. Consultar estados",
-        "4. Reconfigurar fone (MAC/UUIDs)",
-        "5. Sair",
+        "4. Renomear fone",
+        "5. Reconfigurar fone (MAC/UUIDs)",
+        "6. Sair",
+    ]
+
+def linhas_rename(nome_atual: str) -> list:
+    return [
+        "MelobudsNext - Renomear Fone",
+        _sep(),
+        f"Nome atual: {nome_atual}",
+        "",
+        "Digite o novo nome e pressione Enter.",
+        "Deixe vazio para cancelar.",
     ]
 
 def linhas_game_mode() -> list:
