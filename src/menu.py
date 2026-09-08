@@ -2,6 +2,8 @@
 
 from typing import Optional
 
+from . import keys
+
 LARGURA = 46
 ESC = "\x1b"
 
@@ -26,8 +28,9 @@ def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
         "2. Alterar modo ANC",
         "3. Consultar estados",
         "4. Renomear fone",
-        "5. Reconfigurar fone (MAC/UUIDs)",
-        "6. Sair",
+        "5. Personalizar touch",
+        "6. Reconfigurar fone (MAC/UUIDs)",
+        "7. Sair",
     ]
 
 def linhas_rename(nome_atual: str) -> list:
@@ -95,6 +98,25 @@ def linhas_estado(bateria: str, anc: str, game_mode: str, versao: str) -> list:
         "1. Atualizar tudo agora (leituras + 0xFE)",
         "Enter/outro: voltar ao menu",
     ]
+
+def linhas_touch(mapping: dict) -> list:
+    linhas = ["MelobudsNext - Personalizar Touch", _sep()]
+    for i, key in enumerate(keys.KEY_ORDER, start=1):
+        fun = mapping.get(key, keys.FUNC_NONE)
+        linhas.append(f"{i}. {keys.KEY_NAMES[key]}: {keys.FUNC_NAMES[fun]}")
+    linhas += [
+        _sep(),
+        "9. Desativar touch (tudo Nenhuma)",
+        "10. Restaurar mapeamento inicial",
+        "Enter/outro: voltar",
+    ]
+    return linhas
+
+def linhas_funcoes() -> list:
+    linhas = ["MelobudsNext - Função do Toque", _sep()]
+    for i, fun in enumerate(keys.FUNC_ORDER, start=1):
+        linhas.append(f"{i}. {keys.FUNC_NAMES[fun]}")
+    return linhas
 
 def abrir_caixa(linhas: list, prompt: str) -> None:
     print(_topo())

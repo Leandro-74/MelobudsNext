@@ -8,6 +8,7 @@ from . import config
 from . import device
 from . import commands
 from . import menu
+from . import keys
 from .device import MelobudsDevice
 
 async def input_async(prompt: str = "") -> str:
@@ -152,6 +153,28 @@ async def _acao_renomear(dev: MelobudsDevice) -> None:
     dev.state.aplicar(comando)
     print(f"  Comando enviado: novo nome '{novo}'.")
 
+async def _acao_touch(dev: MelobudsDevice) -> None:
+    while True:
+        limpar_tela()
+        mapping = dev.state.touch or {}
+        escolha = await perguntar_async(menu.linhas_touch(mapping), "Escolha: ")
+
+        if escolha.isdigit() and 1 <= int(escolha) <= 8:
+            key = keys.KEY_ORDER[int(escolha) - 1]
+            f_escolha = await perguntar_async(menu.linhas_funcoes(), "Função: ")
+            if f_escolha.isdigit() and 1 <= int(f_escolha) <= len(keys.FUNC_ORDER):
+                mapping[key] = keys.FUNC_ORDER[int(f_escolha) - 1]
+                await dev.gravar_touch(mapping)
+                dev.state.touch = dict(mapping)
+        elif escolha == "9":
+            await dev.gravar_touch({k: keys.FUNC_NONE for k in keys.KEY_ORDER})
+            dev.state.touch = {k: keys.FUNC_NONE for k in keys.KEY_ORDER}
+        elif escolha == "10" and dev.state.touch_inicial:
+            await dev.gravar_touch(dev.state.touch_inicial)
+            dev.state.touch = dict(dev.state.touch_inicial)
+        else:
+            return
+
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
         address=cfg["address"],
@@ -195,11 +218,13 @@ async def run() -> None:
             elif escolha == "4":
                 await _acao_renomear(dev)
             elif escolha == "5":
+                await _acao_touch(dev)
+            elif escolha == "6":
                 await dev.disconnect()
                 config.clear_config()
                 cfg = _configurar_dispositivo()
                 dev = await _conectar(cfg)
-            elif escolha == "6":
+            elif escolha == "7":
                 print("Até mais!")
                 break
             else:
