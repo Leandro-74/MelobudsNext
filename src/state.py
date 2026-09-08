@@ -25,6 +25,8 @@ class DeviceState:
     game_mode: Optional[bool] = None
     version: Optional[str] = None
     nome: Optional[str] = None
+    touch: Optional[dict] = None
+    touch_inicial: Optional[dict] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"

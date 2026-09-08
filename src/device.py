@@ -1,18 +1,14 @@
 # melobudsnext/device.py
 
-# Estabelece conexão e realiza a comunicação
-
 from bleak import BleakClient
 from typing import Optional
 import asyncio
 
 from . import commands
+from . import keys
 from .state import DeviceState
 from .commands import Command
 
-# Valores confirmados por engenharia reversa (captura no nRF Connect).
-# Usados como padrao, mas configuraveis por instancia caso um outro
-# fone/firmware use UUIDs diferentes.
 DEFAULT_ADDRESS = "C4:AC:60:07:68:09"
 DEFAULT_UUID_SERVICE = "0000a001-0000-1000-8000-00805f9b34fb"
 DEFAULT_UUID_WRITE = "00001001-0000-1000-8000-00805f9b34fb"
@@ -98,6 +94,11 @@ class MelobudsDevice:
     async def sync_state(self) -> None:
         await self.atualizar_bateria()
         await self.atualizar_versao()
+        try:
+            self.state.touch_inicial = await self.ler_touch()
+            self.state.touch = dict(self.state.touch_inicial)
+        except Exception:
+            pass
         for cmd_id in (commands.CMD_ANC, commands.CMD_GAME_MODE, commands.CMD_RENAME):
             await self.send_command(commands.request_data(cmd_id))
             await asyncio.sleep(0.8)
@@ -117,6 +118,15 @@ class MelobudsDevice:
             return True
         except Exception:
             return False
+
+    async def ler_touch(self) -> dict:
+        data = bytes(await self.client.read_gatt_char(keys.UUID_KEYS))
+        return keys.parse_pairs(data)
+
+    async def gravar_touch(self, mapping: dict) -> None:
+        await self.client.write_gatt_char(
+            keys.UUID_KEYS, keys.build_bytes(mapping), response=False
+        )
     
     def _notification_handler(self, sender, data: bytes) -> None:
         try:
