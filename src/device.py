@@ -99,7 +99,12 @@ class MelobudsDevice:
             self.state.touch = dict(self.state.touch_inicial)
         except Exception:
             pass
-        for cmd_id in (commands.CMD_ANC, commands.CMD_GAME_MODE, commands.CMD_RENAME):
+        for cmd_id in (
+            commands.CMD_ANC,
+            commands.CMD_GAME_MODE,
+            commands.CMD_RENAME,
+            commands.CMD_SOUND_BALANCE
+            ):
             await self.send_command(commands.request_data(cmd_id))
             await asyncio.sleep(0.8)
 
