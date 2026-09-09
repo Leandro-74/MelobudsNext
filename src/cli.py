@@ -60,13 +60,8 @@ async def _acao_consultar(dev: MelobudsDevice) -> None:
         limpar_tela()
         st = dev.state
         escolha = await perguntar_async(
-            menu.linhas_estado(
-                st.battery_line(),
-                st.anc_label(),
-                st.game_mode_label(),
-                st.version or "desconhecida",
-            ),
-            "Escolha: ",
+            menu.linhas_estado(dev.state),
+            "Escolha:",
         )
         if escolha == "1":
             await dev.sync_state()
@@ -175,6 +170,42 @@ async def _acao_touch(dev: MelobudsDevice) -> None:
         else:
             return
 
+async def _acao_ajustes(dev: MelobudsDevice) -> None:
+    while True:
+        limpar_tela()
+        escolha = await perguntar_async(menu.linhas_ajustes(dev.state), "Escolha:")
+        if escolha == "1":
+            await _acao_balance(dev)
+        else:
+            return
+
+
+async def _acao_balance(dev: MelobudsDevice) -> None:
+    limpar_tela()
+    escolha = await perguntar_async(
+        menu.linhas_balance(dev.state.balance_label()), "Escolha:"
+    )
+    if escolha == "1":
+        valor = 0
+    elif escolha == "2":
+        valor = 50
+    elif escolha == "3":
+        valor = 100
+    elif escolha == "4":
+        raw = await perguntar_async(
+            ["Valor de 0 (esquerda) a 100 (direita):"], "Valor:"
+        )
+        if not raw.isdigit() or not 0 <= int(raw) <= 100:
+            print("  Valor invalido.")
+            return
+        valor = int(raw)
+    else:
+        return
+    comando = commands.sound_balance(valor)
+    await dev.send_command(comando)
+    dev.state.aplicar(comando)
+    print(f"  Equilibrio ajustado para {valor}.")
+
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
         address=cfg["address"],
@@ -220,11 +251,13 @@ async def run() -> None:
             elif escolha == "5":
                 await _acao_touch(dev)
             elif escolha == "6":
+                await _acao_ajustes(dev)
+            elif escolha == "7":
                 await dev.disconnect()
                 config.clear_config()
                 cfg = _configurar_dispositivo()
                 dev = await _conectar(cfg)
-            elif escolha == "7":
+            elif escolha == "8":
                 print("Até mais!")
                 break
             else:

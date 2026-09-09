@@ -3,6 +3,7 @@
 from typing import Optional
 
 from . import keys
+from . import state
 
 LARGURA = 46
 ESC = "\x1b"
@@ -29,8 +30,9 @@ def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
         "3. Consultar estados",
         "4. Renomear fone",
         "5. Personalizar touch",
-        "6. Reconfigurar fone (MAC/UUIDs)",
-        "7. Sair",
+        "6. Ajustes do fone",
+        "7. Reconfigurar fone (MAC/UUIDs)",
+        "8. Sair",
     ]
 
 def linhas_rename(nome_atual: str) -> list:
@@ -86,14 +88,15 @@ def linhas_transparencia() -> list:
         "7. Intensidade 6",
     ]
 
-def linhas_estado(bateria: str, anc: str, game_mode: str, versao: str) -> list:
+def linhas_estado(state) -> list:
     return [
         "MelobudsNext - Estado do Fone",
         _sep(),
-        f"Bateria:   {bateria}",
-        f"ANC:       {anc}",
-        f"Game Mode: {game_mode}",
-        f"Versao:    {versao}",
+        f"Bateria:    {state.battery_line()}",
+        f"ANC:        {state.anc_label()}",
+        f"Game Mode:  {state.game_mode_label()}",
+        f"Versao:     {state.version or 'desconhecida'}",
+        f"Equilibrio: {state.balance_label()}",
         _sep(),
         "1. Atualizar tudo agora (leituras + 0xFE)",
         "Enter/outro: voltar ao menu",
@@ -118,6 +121,28 @@ def linhas_funcoes() -> list:
         linhas.append(f"{i}. {keys.FUNC_NAMES[fun]}")
     return linhas
 
+def linhas_ajustes(state) -> list:
+    return [
+        "MelobudsNext - Ajustes do Fone",
+        _sep(),
+        f"1. Equilibrio do canal: {state.balance_label()}",
+        _sep(),
+        "Enter/outro: voltar",
+    ]
+
+def linhas_balance(atual: str) -> list:
+    return [
+        "MelobudsNext - Equilibrio do Canal",
+        _sep(),
+        f"Atual: {atual}",
+        "0 = todo esquerda | 50 = centro | 100 = todo direita",
+        _sep(),
+        "1. Todo esquerda",
+        "2. Centro (padrao)",
+        "3. Todo direita",
+        "4. Valor personalizado",
+    ]
+    
 def abrir_caixa(linhas: list, prompt: str) -> None:
     print(_topo())
     for l in linhas:
