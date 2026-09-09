@@ -75,6 +75,10 @@ def aprimoramento_vocal() -> Command:
 def rename_device(novo_nome: str) -> Command:
     return Command(opcode=CMD_RENAME, params=list(novo_nome.encode("utf-8")))
 
+def sound_balance(valor: int) -> Command:
+    valor = max(0, min(100, valor))
+    return Command(opcode=CMD_SOUND_BALANCE, params=[valor])
+
 # Comandos
 CMD_GAME_MODE = 0x09
 CMD_ANC = 0x17
@@ -82,6 +86,7 @@ CMD_REQUEST_DATA = 0xFE
 CMD_BATTERY = 0x2F
 CMD_VERSION = 0x30
 CMD_RENAME = 0x18
+CMD_SOUND_BALANCE = 0x16
 
 # Cenas ANC (mode = 0x01)
 CENA_INTERIOR = 0x01
@@ -101,6 +106,7 @@ EVENT_NAMES = {
     CMD_VERSION: "Versao",
     CMD_REQUEST_DATA: "Consulta",
     CMD_RENAME: "Renomear",
+    CMD_SOUND_BALANCE: "Equilibrio",
     0x28: "ANC Wear/Result",
 }
 
