@@ -27,6 +27,7 @@ class DeviceState:
     nome: Optional[str] = None
     touch: Optional[dict] = None
     touch_inicial: Optional[dict] = None
+    balance: Optional[int] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"
@@ -59,6 +60,15 @@ class DeviceState:
         if self.game_mode is None:
             return "desconhecido"
         return "ativado" if self.game_mode else "desativado"
+    
+    def balance_label(self) -> str:
+        if self.balance is None:
+            return "desconhecido"
+        v = self.balance
+        if v == 50:
+            return "centro (50)"
+        lado = "esquerda" if v < 50 else "direita"
+        return f"inclinado p/ {lado} ({v})"
 
     def aplicar(self, cmd: Command) -> None:
         if cmd.opcode == commands.CMD_ANC and len(cmd.params) >= 3:
@@ -69,6 +79,8 @@ class DeviceState:
             raw = bytes(cmd.params).rstrip(b"\x00")
             if raw:
                 self.nome = raw.decode("utf-8", errors="replace")
+        elif cmd.opcode == commands.CMD_SOUND_BALANCE and cmd.params:
+            self.balance = cmd.params[0]
 
     def aplicar_bateria(self, dados: bytes) -> None:
         if len(dados) >= 2:
