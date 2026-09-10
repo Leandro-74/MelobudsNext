@@ -110,7 +110,7 @@ def linhas_touch(mapping: dict) -> list:
         _sep(),
         "9. Desativar touch (tudo Nenhuma)",
         "10. Restaurar mapeamento inicial",
-        "Enter/outro: voltar",
+        "   Enter/outro: voltar",
     ]
     return linhas
 
@@ -126,8 +126,9 @@ def linhas_ajustes(state) -> list:
         _sep(),
         f"1. Equilibrio do canal: {state.balance_label()}",
         "2. Reconfigurar fone (MAC/UUIDs)",
+        "3. Volume de Notificação",
         _sep(),
-        "Enter/outro: voltar",
+        "   Enter/outro: voltar",
     ]
 
 def linhas_balance(atual: str) -> list:
@@ -141,6 +142,19 @@ def linhas_balance(atual: str) -> list:
         "2. Centro (padrao)",
         "3. Todo direita",
         "4. Valor personalizado",
+    ]
+
+def linhas_tone_vol(atual: str) -> list:
+    return [
+        "MelobudsNext - Volume de Notificação",
+        f"Atual: {atual}",
+        _sep(),
+        "1. Volume mais baixo",
+        "2. Volume médio",
+        "3. Volume mais alto",
+        "4. Volume máximo",
+        _sep(),
+        "Enter/outro: voltar",
     ]
     
 def abrir_caixa(linhas: list, prompt: str) -> None:

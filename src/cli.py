@@ -1,4 +1,4 @@
-# melobudsnext/cli.py
+#src/cli.py
 
 import asyncio
 import os
@@ -181,6 +181,8 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             config.clear_config()
             cfg = _configurar_dispositivo()
             dev = await _conectar(cfg)
+        elif escolha == "3":
+            await _acao_tone_volume(dev)
         else:
             return
 
@@ -188,7 +190,7 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
 async def _acao_balance(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(
-        menu.linhas_balance(dev.state.balance_label()), "Escolha:"
+        menu.linhas_balance(dev.state.balance_label()), "Escolha: "
     )
     if escolha == "1":
         valor = 0
@@ -198,7 +200,7 @@ async def _acao_balance(dev: MelobudsDevice) -> None:
         valor = 100
     elif escolha == "4":
         raw = await perguntar_async(
-            ["Valor de 0 (esquerda) a 100 (direita):"], "Valor:"
+            ["Valor de 0 (esquerda) a 100 (direita): "], "Valor: "
         )
         if not raw.isdigit() or not 0 <= int(raw) <= 100:
             print("  Valor invalido.")
@@ -210,6 +212,21 @@ async def _acao_balance(dev: MelobudsDevice) -> None:
     await dev.send_command(comando)
     dev.state.aplicar(comando)
     print(f"  Equilibrio ajustado para {valor}.")
+
+async def _acao_tone_volume(dev: MelobudsDevice) -> None:
+    limpar_tela()
+    escolha = await perguntar_async(
+        menu.linhas_tone_vol(dev.state.tone_volume_label()), "Escolha: "
+    )
+    if escolha not in ("1", "2", "3", "4"):
+        return
+    comando = commands.tone_volume(int(escolha))
+    await dev.send_command(comando)
+    dev.state.aplicar(comando)
+    await asyncio.sleep(0.5)
+    await dev.send_command(
+        commands.request_data(commands.CMD_TONE_VOLUME)
+    )
 
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
