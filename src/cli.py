@@ -156,6 +156,7 @@ async def _acao_touch(dev: MelobudsDevice) -> None:
 
         if escolha.isdigit() and 1 <= int(escolha) <= 8:
             key = keys.KEY_ORDER[int(escolha) - 1]
+            limpar_tela()
             f_escolha = await perguntar_async(menu.linhas_funcoes(), "Função: ")
             if f_escolha.isdigit() and 1 <= int(f_escolha) <= len(keys.FUNC_ORDER):
                 mapping[key] = keys.FUNC_ORDER[int(f_escolha) - 1]
