@@ -28,6 +28,7 @@ class DeviceState:
     touch: Optional[dict] = None
     touch_inicial: Optional[dict] = None
     balance: Optional[int] = None
+    tone_volume: Optional[int] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"
@@ -70,6 +71,11 @@ class DeviceState:
         lado = "esquerda" if v < 50 else "direita"
         return f"inclinado p/ {lado} ({v})"
 
+    def tone_volume_label(self) -> str:
+        if self.tone_volume is None:
+            return "desconhecido"
+        return commands.tone_label(self.tone_volume)
+
     def aplicar(self, cmd: Command) -> None:
         if cmd.opcode == commands.CMD_ANC and len(cmd.params) >= 3:
             self.anc = (cmd.params[0], cmd.params[1], cmd.params[2])
@@ -81,6 +87,8 @@ class DeviceState:
                 self.nome = raw.decode("utf-8", errors="replace")
         elif cmd.opcode == commands.CMD_SOUND_BALANCE and cmd.params:
             self.balance = cmd.params[0]
+        elif cmd.opcode == commands.CMD_TONE_VOLUME and cmd.params:
+            self.tone_volume = cmd.params[0]
 
     def aplicar_bateria(self, dados: bytes) -> None:
         if len(dados) >= 2:
