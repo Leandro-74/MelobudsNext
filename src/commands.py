@@ -1,6 +1,4 @@
-# Montagem e parsing dos pacotes no protocolo do Melobuds Pro
-# HEADER (0xFF) | Length | Cmd | ParamLen | Params...
-# Lenght = 2 + len(Params) (Leva em consideração Cmd + ParamLen + Params...)
+#src/commands.py
 from dataclasses import dataclass
 from typing import List
 
@@ -19,12 +17,10 @@ class Command:
     def __str__(self) -> str:
         params_hex = " ".join(f"{p:02X}" for p in self.params)
         return f"[0x{self.opcode:02X}] params: {params_hex}"
-        
-# Monta o report no protocolo correto
+
 def pack_packet(command: Command) -> bytes:
     return command.to_bytes()
 
-# Decodifica devolução de reports do fone, devolve None se não bater com o padrão esperado
 def parse_packet(data: bytes) -> List[Command]:
     if len(data) < 4 or data[0] != HEADER:
         return []
@@ -51,21 +47,17 @@ def parse_packet(data: bytes) -> List[Command]:
 def request_data(cmd_id: int) -> Command:
     return Command(opcode=CMD_REQUEST_DATA, params=[cmd_id])
 
-# Liga/Desliga o Game Mode
 def game_mode(enable: bool) -> bytes:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_GAME_MODE, params=[val])
 
-# Desliga o ANC
 def anc_off() -> Command:
     return Command(opcode=CMD_ANC, params=[0x00, 0x00, 0x00])
 
-# Liga anc conforme cena selecionada
 def anc_cena(cena: int, nivel: int = 1) -> Command:
     noise = (nivel-1) if cena in CENAS_COM_NIVEL else 0x00
     return Command(opcode=CMD_ANC, params=[0x01, cena, noise])
 
-# Liga transparência conforme nível selecionado
 def transparencia(nivel: int) -> Command:
     return Command(opcode=CMD_ANC, params=[0x03, SUB_TRANSPARENCIA, nivel])
 
@@ -79,7 +71,26 @@ def sound_balance(valor: int) -> Command:
     valor = max(0, min(100, valor))
     return Command(opcode=CMD_SOUND_BALANCE, params=[valor])
 
-# Comandos
+TONE_BYTES = {1: 0x04, 2: 0x06, 3: 0x08, 4: 0x0A}
+TONE_NAMES = {
+    1: "Volume mais baixo",
+    2: "Volume medio",
+    3: "Volume mais alto",
+    4: "Volume maximo",
+}
+
+def tone_volume(categoria: int) -> Command:
+    if categoria not in TONE_BYTES:
+        raise ValueError(f"categoria invalida: {categoria}")
+    valor = TONE_BYTES[categoria]
+    return Command(opcode=CMD_TONE_VOLUME, params=[valor, valor])
+
+def tone_label(valor: int) -> str:
+    for categoria, byte in TONE_BYTES.items():
+        if byte == valor:
+            return f"{categoria}. {TONE_NAMES[categoria]}"
+    return f"desconhecido ({valor})"
+
 CMD_GAME_MODE = 0x09
 CMD_ANC = 0x17
 CMD_REQUEST_DATA = 0xFE
@@ -87,8 +98,8 @@ CMD_BATTERY = 0x2F
 CMD_VERSION = 0x30
 CMD_RENAME = 0x18
 CMD_SOUND_BALANCE = 0x16
+CMD_TONE_VOLUME = 0x1D
 
-# Cenas ANC (mode = 0x01)
 CENA_INTERIOR = 0x01
 CENA_VIAGENS = 0x02
 CENA_BARULHO = 0x03
@@ -96,17 +107,17 @@ CENA_VENTO = 0x04
 CENA_ADAPTATIVO = 0x05
 CENAS_COM_NIVEL = (CENA_INTERIOR, CENA_BARULHO, CENA_VIAGENS)
 
-# Transparencia (mode = 0x03)
 SUB_TRANSPARENCIA = 0x01
 
 EVENT_NAMES = {
     CMD_GAME_MODE: "Game Mode",
     CMD_ANC: "Modo ANC",
     CMD_BATTERY: "Bateria",
-    CMD_VERSION: "Versao",
+    CMD_VERSION: "Versão",
     CMD_REQUEST_DATA: "Consulta",
     CMD_RENAME: "Renomear",
-    CMD_SOUND_BALANCE: "Equilibrio",
+    CMD_SOUND_BALANCE: "Equilíbrio",
+    CMD_TONE_VOLUME: "Volume de Notificação",
     0x28: "ANC Wear/Result",
 }
 
