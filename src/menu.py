@@ -31,8 +31,7 @@ def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
         "4. Renomear fone",
         "5. Personalizar touch",
         "6. Ajustes do fone",
-        "7. Reconfigurar fone (MAC/UUIDs)",
-        "8. Sair",
+        "7. Sair",
     ]
 
 def linhas_rename(nome_atual: str) -> list:
@@ -95,11 +94,11 @@ def linhas_estado(state) -> list:
         f"Bateria:    {state.battery_line()}",
         f"ANC:        {state.anc_label()}",
         f"Game Mode:  {state.game_mode_label()}",
-        f"Versao:     {state.version or 'desconhecida'}",
         f"Equilibrio: {state.balance_label()}",
+        f"Versao:     {state.version or 'desconhecida'}",
         _sep(),
         "1. Atualizar tudo agora (leituras + 0xFE)",
-        "Enter/outro: voltar ao menu",
+        "   Enter/outro: voltar ao menu",
     ]
 
 def linhas_touch(mapping: dict) -> list:
@@ -126,6 +125,7 @@ def linhas_ajustes(state) -> list:
         "MelobudsNext - Ajustes do Fone",
         _sep(),
         f"1. Equilibrio do canal: {state.balance_label()}",
+        "2. Reconfigurar fone (MAC/UUIDs)",
         _sep(),
         "Enter/outro: voltar",
     ]

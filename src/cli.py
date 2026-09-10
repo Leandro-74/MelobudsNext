@@ -173,9 +173,14 @@ async def _acao_touch(dev: MelobudsDevice) -> None:
 async def _acao_ajustes(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
-        escolha = await perguntar_async(menu.linhas_ajustes(dev.state), "Escolha:")
+        escolha = await perguntar_async(menu.linhas_ajustes(dev.state), "Escolha: ")
         if escolha == "1":
             await _acao_balance(dev)
+        elif escolha == "2":
+            await dev.disconnect()
+            config.clear_config()
+            cfg = _configurar_dispositivo()
+            dev = await _conectar(cfg)
         else:
             return
 
@@ -253,11 +258,6 @@ async def run() -> None:
             elif escolha == "6":
                 await _acao_ajustes(dev)
             elif escolha == "7":
-                await dev.disconnect()
-                config.clear_config()
-                cfg = _configurar_dispositivo()
-                dev = await _conectar(cfg)
-            elif escolha == "8":
                 print("Até mais!")
                 break
             else:
