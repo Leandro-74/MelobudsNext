@@ -23,6 +23,7 @@ class DeviceState:
     case: BatteryInfo = field(default_factory=BatteryInfo)
     anc: Optional[Tuple[int, int, int]] = None
     game_mode: Optional[bool] = None
+    sleep_mode: Optional[bool] = None
     version: Optional[str] = None
     nome: Optional[str] = None
     touch: Optional[dict] = None
@@ -62,6 +63,11 @@ class DeviceState:
             return "desconhecido"
         return "ativado" if self.game_mode else "desativado"
     
+    def sleep_mode_label(self) -> str:
+        if self.sleep_mode is None:
+            return "desconhecido"
+        return "ativado" if self.sleep_mode else "desativado"
+
     def balance_label(self) -> str:
         if self.balance is None:
             return "desconhecido"
@@ -81,6 +87,8 @@ class DeviceState:
             self.anc = (cmd.params[0], cmd.params[1], cmd.params[2])
         elif cmd.opcode == commands.CMD_GAME_MODE and len(cmd.params) >= 1:
             self.game_mode = (cmd.params[0] == 0x01)
+        elif cmd.opcode == commands.CMD_SLEEP_MODE and len(cmd.params) >= 1:
+            self.sleep_mode = (cmd.params[0] == 0x01)
         elif cmd.opcode == commands.CMD_RENAME:
             raw = bytes(cmd.params).rstrip(b"\x00")
             if raw:
