@@ -102,6 +102,7 @@ class MelobudsDevice:
         for cmd_id in (
             commands.CMD_ANC,
             commands.CMD_GAME_MODE,
+            commands.CMD_SLEEP_MODE,
             commands.CMD_RENAME,
             commands.CMD_SOUND_BALANCE,
             commands.CMD_TONE_VOLUME
@@ -142,7 +143,7 @@ class MelobudsDevice:
                     print(f"  [Fone] {data.hex('-').upper()} (não reconhecido)")
                 return
             for cmd in parsed_commands:
-                self.state.aplicar(cmd)   # estado ao vivo, em silencio
+                self.state.aplicar(cmd)
                 if VERBOSE:
                     event_name = commands.get_event_name(cmd.opcode)
                     print(f"  [Fone] {event_name}: {cmd}")
