@@ -51,6 +51,10 @@ def game_mode(enable: bool) -> bytes:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_GAME_MODE, params=[val])
 
+def sleep_mode(enable: bool) -> bytes:
+    val = 0x01 if enable else 0x02
+    return Command(opcode=CMD_SLEEP_MODE, params=[val])
+
 def anc_off() -> Command:
     return Command(opcode=CMD_ANC, params=[0x00, 0x00, 0x00])
 
@@ -92,6 +96,7 @@ def tone_label(valor: int) -> str:
     return f"desconhecido ({valor})"
 
 CMD_GAME_MODE = 0x09
+CMD_SLEEP_MODE = 0x10
 CMD_ANC = 0x17
 CMD_REQUEST_DATA = 0xFE
 CMD_BATTERY = 0x2F
@@ -110,7 +115,7 @@ CENAS_COM_NIVEL = (CENA_INTERIOR, CENA_BARULHO, CENA_VIAGENS)
 SUB_TRANSPARENCIA = 0x01
 
 EVENT_NAMES = {
-    CMD_GAME_MODE: "Game Mode",
+    CMD_GAME_MODE: "Modo de Jogo",
     CMD_ANC: "Modo ANC",
     CMD_BATTERY: "Bateria",
     CMD_VERSION: "Versão",
@@ -118,6 +123,7 @@ EVENT_NAMES = {
     CMD_RENAME: "Renomear",
     CMD_SOUND_BALANCE: "Equilíbrio",
     CMD_TONE_VOLUME: "Volume de Notificação",
+    CMD_SLEEP_MODE: "Modo de Sono",
     0x28: "ANC Wear/Result",
 }
 
