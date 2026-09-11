@@ -30,6 +30,7 @@ class DeviceState:
     touch_inicial: Optional[dict] = None
     balance: Optional[int] = None
     tone_volume: Optional[int] = None
+    ldac: Optional[bool] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"
@@ -82,6 +83,11 @@ class DeviceState:
             return "desconhecido"
         return commands.tone_label(self.tone_volume)
 
+    def ldac_label(self) -> str:
+        if self.ldac is None:
+            return "desconhecido"
+        return "ativado" if self.ldac else "desativado"
+
     def aplicar(self, cmd: Command) -> None:
         if cmd.opcode == commands.CMD_ANC and len(cmd.params) >= 3:
             self.anc = (cmd.params[0], cmd.params[1], cmd.params[2])
@@ -97,6 +103,8 @@ class DeviceState:
             self.balance = cmd.params[0]
         elif cmd.opcode == commands.CMD_TONE_VOLUME and cmd.params:
             self.tone_volume = cmd.params[0]
+        elif cmd.opcode == commands.CMD_LDAC and len(cmd.params) >= 1:
+            self.ldac = (cmd.params[0] == 0x01)
 
     def aplicar_bateria(self, dados: bytes) -> None:
         if len(dados) >= 2:
