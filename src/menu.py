@@ -51,6 +51,14 @@ def linhas_game_mode() -> list:
         "2. Desativar",
     ]
 
+def linhas_sleep_mode() -> list:
+    return [
+        "MelobudsNext - Modo de Sono",
+        _sep(),
+        "1. Ativar",
+        "2. Desativar",
+    ]
+
 def linhas_anc() -> list:
     return [
         "MelobudsNext - ANC",
@@ -90,11 +98,12 @@ def linhas_estado(state) -> list:
     return [
         "MelobudsNext - Estado do Fone",
         _sep(),
-        f"Bateria:    {state.battery_line()}",
-        f"ANC:        {state.anc_label()}",
-        f"Game Mode:  {state.game_mode_label()}",
-        f"Equilibrio: {state.balance_label()}",
-        f"Versao:     {state.version or 'desconhecida'}",
+        f"Bateria:      {state.battery_line()}",
+        f"ANC:          {state.anc_label()}",
+        f"Game Mode:    {state.game_mode_label()}",
+        f"Modo de Sono: {state.sleep_mode_label()}",
+        f"Equilibrio:   {state.balance_label()}",
+        f"Versao:       {state.version or 'desconhecida'}",
         _sep(),
         "1. Atualizar tudo agora (leituras + 0xFE)",
         "   Enter/outro: voltar ao menu",
@@ -127,6 +136,7 @@ def linhas_ajustes(state) -> list:
         "2. Reconfigurar fone (MAC/UUIDs)",
         "3. Volume de Notificação",
         "4. Modo de Jogo",
+        "5. Modo de Sono",
         _sep(),
         "Enter/outro: voltar",
     ]

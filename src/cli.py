@@ -81,6 +81,19 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
     else:
         print("Opção inválida.")
 
+async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
+    limpar_tela()
+    escolha = await perguntar_async(menu.linhas_sleep_mode(), "Escolha: ")
+
+    if escolha == "1":
+        await dev.send_command(commands.sleep_mode(True))
+        print("Comando enviado: Modo de Sono ativado.")
+    elif escolha == "2":
+        await dev.send_command(commands.sleep_mode(False))
+        print("Comando enviado: Modo de Sono desativado.")
+    else:
+        print("Opção inválida.")
+
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_anc(), "Escolha o modo: ")
@@ -186,6 +199,8 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             await _acao_tone_volume(dev)
         elif escolha == "4":
             await _acao_game_mode(dev)
+        elif escolha == "5":
+            await _acao_sleep_mode(dev)
         else:
             return
 
