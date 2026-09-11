@@ -59,6 +59,14 @@ def linhas_sleep_mode() -> list:
         "2. Desativar",
     ]
 
+def linhas_ldac() -> list:
+    return [
+        "MelobudsNext - LDAC",
+        _sep(),
+        "1. Ativar",
+        "2. Desativar",
+    ]
+
 def linhas_anc() -> list:
     return [
         "MelobudsNext - ANC",
@@ -102,6 +110,7 @@ def linhas_estado(state) -> list:
         f"ANC:          {state.anc_label()}",
         f"Game Mode:    {state.game_mode_label()}",
         f"Modo de Sono: {state.sleep_mode_label()}",
+        f"LDAC:         {state.ldac_label()}",
         f"Equilibrio:   {state.balance_label()}",
         f"Versao:       {state.version or 'desconhecida'}",
         _sep(),
@@ -137,6 +146,7 @@ def linhas_ajustes(state) -> list:
         "3. Volume de Notificação",
         "4. Modo de Jogo",
         "5. Modo de Sono",
+        "6. LDAC",
         _sep(),
         "Enter/outro: voltar",
     ]

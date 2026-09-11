@@ -94,6 +94,15 @@ async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
     else:
         print("Opção inválida.")
 
+async def _acao_ldac(dev: MelobudsDevice) -> None:
+    limpar_tela()
+    escolha = await perguntar_async(menu.linhas_ldac(), "Escolha: ")
+
+    if escolha == "1":
+        await dev.send_command(commands.ldac(True))
+    elif escolha == "2":
+        await dev.send_command(commands.ldac(False))
+
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_anc(), "Escolha o modo: ")
@@ -201,6 +210,8 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             await _acao_game_mode(dev)
         elif escolha == "5":
             await _acao_sleep_mode(dev)
+        elif escolha == "6":
+            await _acao_ldac(dev)
         else:
             return
 
