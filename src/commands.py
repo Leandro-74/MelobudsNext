@@ -55,6 +55,10 @@ def sleep_mode(enable: bool) -> bytes:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_SLEEP_MODE, params=[val])
 
+def ldac(enable: bool) -> bytes:
+    val = 0x01 if enable else 0x02
+    return Command(opcode=CMD_LDAC, params=[val])
+
 def anc_off() -> Command:
     return Command(opcode=CMD_ANC, params=[0x00, 0x00, 0x00])
 
@@ -104,6 +108,7 @@ CMD_VERSION = 0x30
 CMD_RENAME = 0x18
 CMD_SOUND_BALANCE = 0x16
 CMD_TONE_VOLUME = 0x1D
+CMD_LDAC = 0x23
 
 CENA_INTERIOR = 0x01
 CENA_VIAGENS = 0x02
@@ -124,6 +129,7 @@ EVENT_NAMES = {
     CMD_SOUND_BALANCE: "Equilíbrio",
     CMD_TONE_VOLUME: "Volume de Notificação",
     CMD_SLEEP_MODE: "Modo de Sono",
+    CMD_LDAC: "LDAC",
     0x28: "ANC Wear/Result",
 }
 
