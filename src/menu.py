@@ -25,13 +25,12 @@ def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
         f"MelobudsNext - {nome_fone or 'QCY Melobuds Pro'}",
         status,
         _sep(),
-        "1. Ativar/Desativar Game Mode",
-        "2. Alterar modo ANC",
-        "3. Consultar estados",
-        "4. Renomear fone",
-        "5. Personalizar touch",
-        "6. Ajustes do fone",
-        "7. Sair",
+        "1. Alterar modo ANC",
+        "2. Consultar estados",
+        "3. Renomear fone",
+        "4. Personalizar touch",
+        "5. Ajustes do fone",
+        "6. Sair",
     ]
 
 def linhas_rename(nome_atual: str) -> list:
@@ -46,7 +45,7 @@ def linhas_rename(nome_atual: str) -> list:
 
 def linhas_game_mode() -> list:
     return [
-        "MelobudsNext - Game Mode",
+        "MelobudsNext - Modo de Jogo",
         _sep(),
         "1. Ativar",
         "2. Desativar",
@@ -127,8 +126,9 @@ def linhas_ajustes(state) -> list:
         f"1. Equilibrio do canal: {state.balance_label()}",
         "2. Reconfigurar fone (MAC/UUIDs)",
         "3. Volume de Notificação",
+        "4. Modo de Jogo",
         _sep(),
-        "   Enter/outro: voltar",
+        "Enter/outro: voltar",
     ]
 
 def linhas_balance(atual: str) -> list:

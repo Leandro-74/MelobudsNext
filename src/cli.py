@@ -184,6 +184,8 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             dev = await _conectar(cfg)
         elif escolha == "3":
             await _acao_tone_volume(dev)
+        elif escolha == "4":
+            await _acao_game_mode(dev)
         else:
             return
 
@@ -264,18 +266,16 @@ async def run() -> None:
             )
 
             if escolha == "1":
-                await _acao_game_mode(dev)
-            elif escolha == "2":
                 await _acao_anc(dev)
-            elif escolha == "3":
+            elif escolha == "2":
                 await _acao_consultar(dev)
-            elif escolha == "4":
+            elif escolha == "3":
                 await _acao_renomear(dev)
-            elif escolha == "5":
+            elif escolha == "4":
                 await _acao_touch(dev)
-            elif escolha == "6":
+            elif escolha == "5":
                 await _acao_ajustes(dev)
-            elif escolha == "7":
+            elif escolha == "6":
                 print("Até mais!")
                 break
             else:
