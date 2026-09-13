@@ -193,6 +193,15 @@ async def _acao_touch(dev: MelobudsDevice) -> None:
         else:
             return
 
+async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
+    raw = dev.state.wear_raw or (0x00, 0x01, 0x00, 0x00)
+    comando = commands.wearing_detection(enable, anc, music_index=raw[1], tone=raw[3])
+    await dev.send_command(comando)
+    dev.state.aplicar(comando)
+    await asyncio.sleep(0.5)
+    await dev.send_command(commands.request_data(commands.CMD_WEARING))
+    await asyncio.sleep(0.8)
+
 async def _acao_ajustes(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
@@ -212,6 +221,8 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             await _acao_sleep_mode(dev)
         elif escolha == "6":
             await _acao_ldac(dev)
+        elif escolha == "7":
+            await _acao_wear(dev)
         else:
             return
 
@@ -256,6 +267,40 @@ async def _acao_tone_volume(dev: MelobudsDevice) -> None:
     await dev.send_command(
         commands.request_data(commands.CMD_TONE_VOLUME)
     )
+
+async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
+    raw = dev.state.wear_raw or (0x00, 0x01, 0x00, 0x00)
+    comando = commands.wearing_detection(enable, anc, music_index=raw[1], tone=raw[3])
+    await dev.send_command(comando)
+    dev.state.aplicar(comando)
+    await asyncio.sleep(0.5)
+    await dev.send_command(commands.request_data(commands.CMD_WEARING))
+    await asyncio.sleep(0.8)
+
+async def _acao_wear(dev: MelobudsDevice) -> None:
+    while True:
+        limpar_tela()
+        escolha = await perguntar_async(menu.linhas_wear(dev.state), "Escolha: ")
+        if escolha in ("1", "2"):
+            await _enviar_wear(dev, enable=(escolha == "1"),
+                               anc=(dev.state.wear_anc or False))
+        elif escolha == "3" and dev.state.wear:
+            await _acao_wear_anc(dev)
+        else:
+            return
+
+
+async def _acao_wear_anc(dev: MelobudsDevice) -> None:
+    while True:
+        limpar_tela()
+        escolha = await perguntar_async(
+            menu.linhas_wear_anc(dev.state.wear_anc_label()), "Escolha: "
+        )
+        if escolha in ("1", "2"):
+            enable = dev.state.wear if dev.state.wear is not None else True
+            await _enviar_wear(dev, enable=enable, anc=(escolha == "1"))
+        else:
+            return
 
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(

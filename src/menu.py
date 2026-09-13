@@ -106,13 +106,14 @@ def linhas_estado(state) -> list:
     return [
         "MelobudsNext - Estado do Fone",
         _sep(),
-        f"Bateria:      {state.battery_line()}",
-        f"ANC:          {state.anc_label()}",
-        f"Game Mode:    {state.game_mode_label()}",
-        f"Modo de Sono: {state.sleep_mode_label()}",
-        f"LDAC:         {state.ldac_label()}",
-        f"Equilibrio:   {state.balance_label()}",
-        f"Versao:       {state.version or 'desconhecida'}",
+        f"Bateria:         {state.battery_line()}",
+        f"ANC:             {state.anc_label()}",
+        f"Game Mode:       {state.game_mode_label()}",
+        f"Modo de Sono:    {state.sleep_mode_label()}",
+        f"LDAC:            {state.ldac_label()}",
+        f"Detecção de Uso: {state.wear_label()}",
+        f"Equilibrio:      {state.balance_label()}",
+        f"Versao:          {state.version or 'desconhecida'}",
         _sep(),
         "1. Atualizar tudo agora (leituras + 0xFE)",
         "   Enter/outro: voltar ao menu",
@@ -147,10 +148,36 @@ def linhas_ajustes(state) -> list:
         "4. Modo de Jogo",
         "5. Modo de Sono",
         "6. LDAC",
+        "7. Detecção de Uso",
         _sep(),
         "Enter/outro: voltar",
     ]
 
+def linhas_wear(state) -> list:
+    linhas = [
+        "MelobudsNext - Detecção de Uso",
+        _sep(),
+        f"Atual: {state.wear_label()}",
+        _sep(),
+        "1. Ligar",
+        "2. Desligar",
+    ]
+    if state.wear:
+        linhas.append(f"3. Desligar ANC ao remover: {state.wear_anc_label()}")
+    return linhas
+
+def linhas_wear_anc(atual: str) -> list:
+    return [
+        "MelobudsNext - Desligar ANC ao Remover",
+        _sep(),
+        f"Atual: {atual}",
+        _sep(),
+        "1. Ligar",
+        "2. Desligar",
+        _sep(),
+        "Enter/outro: voltar",
+    ]
+    
 def linhas_balance(atual: str) -> list:
     return [
         "MelobudsNext - Equilibrio do Canal",
