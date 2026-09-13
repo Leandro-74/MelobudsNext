@@ -31,6 +31,9 @@ class DeviceState:
     balance: Optional[int] = None
     tone_volume: Optional[int] = None
     ldac: Optional[bool] = None
+    wear: Optional[bool] = None
+    wear_anc: Optional[bool] = None
+    wear_raw: Optional[Tuple[int, ...]] = None
 
     def battery_line(self) -> str:
         return f"L: {self.left.display()} | R: {self.right.display()}"
@@ -88,6 +91,16 @@ class DeviceState:
             return "desconhecido"
         return "ativado" if self.ldac else "desativado"
 
+    def wear_label(self) -> str:
+        if self.wear is None:
+            return "desconhecida"
+        return "ligada" if self.wear else "desligada"
+
+    def wear_anc_label(self) -> str:
+        if self.wear_anc is None:
+            return "desconhecido"
+        return "ligado" if self.wear_anc else "desligado"
+
     def aplicar(self, cmd: Command) -> None:
         if cmd.opcode == commands.CMD_ANC and len(cmd.params) >= 3:
             self.anc = (cmd.params[0], cmd.params[1], cmd.params[2])
@@ -105,6 +118,11 @@ class DeviceState:
             self.tone_volume = cmd.params[0]
         elif cmd.opcode == commands.CMD_LDAC and len(cmd.params) >= 1:
             self.ldac = (cmd.params[0] == 0x01)
+        elif cmd.opcode == commands.CMD_WEARING and len(cmd.params) >= 3:
+            p = cmd.params
+            self.wear = (p[0] == 0x01)
+            self.wear_anc = (p[2] == 0x01)
+            self.wear_raw = tuple(p[:4]) if len(p) >= 4 else tuple(p[:3]) + (0x00,)
 
     def aplicar_bateria(self, dados: bytes) -> None:
         if len(dados) >= 2:
