@@ -79,6 +79,14 @@ def sound_balance(valor: int) -> Command:
     valor = max(0, min(100, valor))
     return Command(opcode=CMD_SOUND_BALANCE, params=[valor])
 
+def wearing_detection(enable: bool, anc_enable: bool,
+                      music_index: int = 0x01, tone: int = 0x00) -> Command:
+    return Command(
+        opcode=CMD_WEARING,
+        params=[0x01 if enable else 0x00, music_index,
+                0x01 if anc_enable else 0x00, tone],
+    )
+
 TONE_BYTES = {1: 0x04, 2: 0x06, 3: 0x08, 4: 0x0A}
 TONE_NAMES = {
     1: "Volume mais baixo",
@@ -109,6 +117,7 @@ CMD_RENAME = 0x18
 CMD_SOUND_BALANCE = 0x16
 CMD_TONE_VOLUME = 0x1D
 CMD_LDAC = 0x23
+CMD_WEARING = 0x2C
 
 CENA_INTERIOR = 0x01
 CENA_VIAGENS = 0x02
@@ -130,6 +139,7 @@ EVENT_NAMES = {
     CMD_TONE_VOLUME: "Volume de Notificação",
     CMD_SLEEP_MODE: "Modo de Sono",
     CMD_LDAC: "LDAC",
+    CMD_WEARING: "Detecção de Uso",
     0x28: "ANC Wear/Result",
 }
 
