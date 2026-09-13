@@ -106,7 +106,8 @@ class MelobudsDevice:
             commands.CMD_RENAME,
             commands.CMD_SOUND_BALANCE,
             commands.CMD_TONE_VOLUME,
-            commands.CMD_LDAC
+            commands.CMD_LDAC,
+            commands.CMD_WEARING
             ):
             await self.send_command(commands.request_data(cmd_id))
             await asyncio.sleep(0.8)
