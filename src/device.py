@@ -110,7 +110,8 @@ class MelobudsDevice:
             commands.CMD_WEARING
             ):
             await self.send_command(commands.request_data(cmd_id))
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(0.05)
+        await asyncio.sleep(1.0)
 
     async def atualizar_bateria(self) -> bool:
         try:
