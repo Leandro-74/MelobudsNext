@@ -76,9 +76,10 @@ def linhas_ldac() -> list:
     ]
 
 # Tela das cenas de ANC
-def linhas_anc() -> list:
+def linhas_anc(atual: str) -> list:
     return [
         "MelobudsNext - ANC",
+        f"Atual: {atual}",
         _sep(),
         "1. Desligado",
         "2. Interior",
