@@ -65,7 +65,6 @@ async def _escolher_nivel(quantidade: int) -> Optional[int]:
 async def _acao_consultar(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
-        st = dev.state
         escolha = await perguntar_async(
             menu.linhas_estado(dev.state),
             "Escolha:",
@@ -112,11 +111,13 @@ async def _acao_ldac(dev: MelobudsDevice) -> None:
         await dev.send_command(commands.ldac(True))
     elif escolha == "2":
         await dev.send_command(commands.ldac(False))
+    else:
+        print("Opção inválida.")
 
 # Menu do ANC: cenas com nivel, vento, adaptativo e transparencia (0x17)
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
-    escolha = await perguntar_async(menu.linhas_anc(), "Escolha o modo: ")
+    escolha = await perguntar_async(menu.linhas_anc(dev.state.anc_label()), "Escolha o modo: ")
 
     if escolha == "1":
         comando, nome = commands.anc_off(), "Desligado"
@@ -284,6 +285,9 @@ async def _acao_tone_volume(dev: MelobudsDevice) -> None:
     await dev.send_command(
         commands.request_data(commands.CMD_TONE_VOLUME)
     )
+    await asyncio.sleep(0.7)
+    print(f"  Volume de notificacao: {dev.state.tone_volume_label()}.")
+    await asyncio.sleep(0.5) 
 
 # Tela principal da deteccao de uso, com opcao condicional de ANC ao remover
 async def _acao_wear(dev: MelobudsDevice) -> None:
