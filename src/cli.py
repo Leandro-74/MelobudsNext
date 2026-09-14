@@ -24,9 +24,9 @@ def _configurar_dispositivo() -> Dict[str, str]:
     limpar_tela()
     print("\n O fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
     endereco = menu.perguntar(
-        ["Endereço MAC do fone", f"Enter para usar {device.DEFAULT_ADDRESS}"],
+        "Endereço MAC do fone",
         "MAC: ",
-    ) or device.DEFAULT_ADDRESS
+    )
     limpar_tela()
     usar_padrao = menu.perguntar(
         ["Usar os UUIDs padrão já confirmados?"], "[S/n]: "
