@@ -47,15 +47,15 @@ def parse_packet(data: bytes) -> List[Command]:
 def request_data(cmd_id: int) -> Command:
     return Command(opcode=CMD_REQUEST_DATA, params=[cmd_id])
 
-def game_mode(enable: bool) -> bytes:
+def game_mode(enable: bool) -> Command:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_GAME_MODE, params=[val])
 
-def sleep_mode(enable: bool) -> bytes:
+def sleep_mode(enable: bool) -> Command:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_SLEEP_MODE, params=[val])
 
-def ldac(enable: bool) -> bytes:
+def ldac(enable: bool) -> Command:
     val = 0x01 if enable else 0x02
     return Command(opcode=CMD_LDAC, params=[val])
 
