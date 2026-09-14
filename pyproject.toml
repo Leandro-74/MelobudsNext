@@ -17,4 +17,5 @@ dependencies = [
 melobudsnext = "melobudsnext.cli:main"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["melobudsnext*"]
