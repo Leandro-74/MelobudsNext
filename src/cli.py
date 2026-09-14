@@ -173,7 +173,7 @@ async def _acao_renomear(dev: MelobudsDevice) -> None:
 async def _acao_touch(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
-        mapping = dev.state.touch or {}
+        mapping = dict(dev.state.touch or {})
         escolha = await perguntar_async(menu.linhas_touch(mapping), "Escolha: ")
 
         if escolha.isdigit() and 1 <= int(escolha) <= 8:
