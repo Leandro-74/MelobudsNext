@@ -15,7 +15,7 @@ def load_config() -> Optional[Dict[str, str]]:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data if data else None
-    except (json.JSONDecodeError, OSError):
+    except (ValueError, OSError):
         return None
 
 # Persiste MAC e UUIDs para as proximas execucoes
