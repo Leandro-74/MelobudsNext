@@ -1,6 +1,4 @@
-# melobudsnext/config.py]
-
-# Carrega e salva configs (MAC address e UUIDs) em um JSON na /home
+# src/config.py
 
 import json
 from pathlib import Path
@@ -9,7 +7,7 @@ from typing import Optional, Dict
 CONFIG_DIR = Path.home() / ".melobudsnext"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
-# Carrega a config salva, ou retorna None se vazia ou não existir
+# Le o JSON salvo; None se nao existir ou estiver corrompido
 def load_config() -> Optional[Dict[str, str]]:
     if not CONFIG_FILE.exists():
         return None
@@ -20,7 +18,7 @@ def load_config() -> Optional[Dict[str, str]]:
     except (json.JSONDecodeError, OSError):
         return None
 
-# Salva MAC address e UUIDs
+# Persiste MAC e UUIDs para as proximas execucoes
 def save_device(address: str, uuid_service: str, uuid_write: str, uuid_notify: str) -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     data = {
@@ -32,7 +30,7 @@ def save_device(address: str, uuid_service: str, uuid_write: str, uuid_notify: s
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-# Apaga config salva
+# Apaga a config salva (fluxo de reconfigurar)
 def clear_config() -> None:
     if CONFIG_FILE.exists():
         CONFIG_FILE.unlink()

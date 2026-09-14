@@ -1,4 +1,4 @@
-#src/device.py
+# src/device.py
 
 from bleak import BleakClient
 from typing import Optional
@@ -9,15 +9,20 @@ from . import keys
 from .state import DeviceState
 from .commands import Command
 
+# UUIDs confirmados por captura BLE (sobrescreviveis por instancia)
 DEFAULT_UUID_SERVICE = "0000a001-0000-1000-8000-00805f9b34fb"
 DEFAULT_UUID_WRITE = "00001001-0000-1000-8000-00805f9b34fb"
 DEFAULT_UUID_NOTIFY = "00001002-0000-1000-8000-00805f9b34fb"
+
+# Characteristics V1 de leitura direta (bateria e versao)
 UUID_BATTERY_V1 = "00000008-0000-1000-8000-00805f9b34fb"
 UUID_VERSION_V1 = "00000007-0000-1000-8000-00805f9b34fb"
 
+# Liga/desliga os logs crus de pacotes (modo laboratorio)
 VERBOSE = False
 
 class MelobudsDevice:
+    # Guarda endereco/UUIDs e cria o estado vazio do fone
     def __init__(
         self,
         address: str,
@@ -38,9 +43,11 @@ class MelobudsDevice:
         self._char_notify: Optional[object] = None
 
     @property
+    # Indica se a conexao BLE esta ativa
     def connected(self) -> bool:
         return self._connected
 
+    # Conecta, resolve as characteristics, ativa notificacoes e sincroniza o estado
     async def connect(self) -> None:
         await self.client.connect()
 
@@ -70,6 +77,7 @@ class MelobudsDevice:
         )
         await self.sync_state()
 
+    # Para as notificacoes e desconecta com seguranca
     async def disconnect(self) -> None:
         if self._connected:
             try:
@@ -79,6 +87,7 @@ class MelobudsDevice:
             await self.client.disconnect()
             self._connected = False
 
+    # Envia um Command pela characteristic de escrita (write sem resposta)
     async def send_command(self, command: Command) -> None:
         if not self._connected:
             raise ConnectionError("Dispositivo não conectado.")
@@ -90,6 +99,7 @@ class MelobudsDevice:
             response=False
         )
 
+    # Fotografa o fone ao conectar: leituras diretas + consultas 0xFE
     async def sync_state(self) -> None:
         await self.atualizar_bateria()
         await self.atualizar_versao()
@@ -112,6 +122,7 @@ class MelobudsDevice:
             await asyncio.sleep(0.05)
         await asyncio.sleep(1.0)
 
+    # Le L/R direto da characteristic 00000008
     async def atualizar_bateria(self) -> bool:
         try:
             dados = bytes(await self.client.read_gatt_char(UUID_BATTERY_V1))
@@ -122,6 +133,7 @@ class MelobudsDevice:
                 print(f"  [Erro] Falha ao ler bateria: {e}")
             return False
 
+    # Le o firmware direto da characteristic 00000007
     async def atualizar_versao(self) -> bool:
         try:
             dados = bytes(await self.client.read_gatt_char(UUID_VERSION_V1))
@@ -132,15 +144,18 @@ class MelobudsDevice:
                 print(f"  [Erro] Falha ao ler versao: {e}")
             return False
 
+    # Le o mapeamento cru de touch da characteristic 0000000D
     async def ler_touch(self) -> dict:
         data = bytes(await self.client.read_gatt_char(keys.UUID_KEYS))
         return keys.parse_pairs(data)
 
+    # Grava o mapeamento completo de touch (20 bytes)
     async def gravar_touch(self, mapping: dict) -> None:
         await self.client.write_gatt_char(
             keys.UUID_KEYS, keys.build_bytes(mapping), response=False
         )
     
+    # Alimenta o estado com cada pacote recebido (loga se VERBOSE)
     def _notification_handler(self, sender, data: bytes) -> None:
         try:
             parsed_commands = commands.parse_packet(data)

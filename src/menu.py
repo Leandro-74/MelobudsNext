@@ -5,12 +5,15 @@ from typing import Optional
 from . import keys
 from . import state
 
+# Largura interna das caixas e prefixo dos escapes ANSI
 LARGURA = 46
 ESC = "\x1b"
 
+# Linha de conteudo com bordas e preenchimento a direita
 def _linha(texto: str = "") -> str:
     return "║" + (" " + texto).ljust(LARGURA) + "║"
 
+# Bordas horizontais da caixa (topo, separador e base)
 def _topo() -> str:
     return "╔" + "═" * LARGURA + "╗"
 
@@ -20,6 +23,7 @@ def _sep() -> str:
 def _fundo() -> str:
     return "╚" + "═" * LARGURA + "╝"
 
+# Conteudo do menu principal (titulo, bateria e opcoes)
 def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
     return [
         f"MelobudsNext - {nome_fone or 'QCY Melobuds Pro'}",
@@ -33,6 +37,7 @@ def linhas_principal(status: str, nome_fone: Optional[str] = None) -> list:
         "6. Sair",
     ]
 
+# Tela de rename com o nome atual
 def linhas_rename(nome_atual: str) -> list:
     return [
         "MelobudsNext - Renomear Fone",
@@ -43,6 +48,7 @@ def linhas_rename(nome_atual: str) -> list:
         "Deixe vazio para cancelar.",
     ]
 
+# Tela do toggle de Game Mode
 def linhas_game_mode() -> list:
     return [
         "MelobudsNext - Modo de Jogo",
@@ -51,6 +57,7 @@ def linhas_game_mode() -> list:
         "2. Desativar",
     ]
 
+# Tela do toggle de Sleep Mode
 def linhas_sleep_mode() -> list:
     return [
         "MelobudsNext - Modo de Sono",
@@ -59,6 +66,7 @@ def linhas_sleep_mode() -> list:
         "2. Desativar",
     ]
 
+# Tela do toggle de LDAC
 def linhas_ldac() -> list:
     return [
         "MelobudsNext - LDAC",
@@ -67,6 +75,7 @@ def linhas_ldac() -> list:
         "2. Desativar",
     ]
 
+# Tela das cenas de ANC
 def linhas_anc() -> list:
     return [
         "MelobudsNext - ANC",
@@ -80,6 +89,7 @@ def linhas_anc() -> list:
         "7. Transparência",
     ]
 
+# Tela de intensidade do ANC
 def linhas_nivel() -> list:
     return [
         "MelobudsNext - Nível do ANC",
@@ -89,6 +99,7 @@ def linhas_nivel() -> list:
         "3. Intensidade 3",
     ]
 
+# Tela do modo transparencia
 def linhas_transparencia() -> list:
     return [
         "MelobudsNext - Modo Transparência",
@@ -102,6 +113,7 @@ def linhas_transparencia() -> list:
         "7. Intensidade 6",
     ]
 
+# Painel de consulta com todos os rotulos do estado
 def linhas_estado(state) -> list:
     return [
         "MelobudsNext - Estado do Fone",
@@ -119,6 +131,7 @@ def linhas_estado(state) -> list:
         "   Enter/outro: voltar ao menu",
     ]
 
+# Tabela atual do touch + acoes de desativar/restaurar
 def linhas_touch(mapping: dict) -> list:
     linhas = ["MelobudsNext - Personalizar Touch", _sep()]
     for i, key in enumerate(keys.KEY_ORDER, start=1):
@@ -132,12 +145,14 @@ def linhas_touch(mapping: dict) -> list:
     ]
     return linhas
 
+# Lista das funcoes atributiveis a uma tecla
 def linhas_funcoes() -> list:
     linhas = ["MelobudsNext - Função do Toque", _sep()]
     for i, fun in enumerate(keys.FUNC_ORDER, start=1):
         linhas.append(f"{i}. {keys.FUNC_NAMES[fun]}")
     return linhas
 
+# Submenu dos ajustes com os valores atuais
 def linhas_ajustes(state) -> list:
     return [
         "MelobudsNext - Ajustes do Fone",
@@ -153,6 +168,7 @@ def linhas_ajustes(state) -> list:
         "Enter/outro: voltar",
     ]
 
+# Tela do toggle de Detecção de Uso
 def linhas_wear(state) -> list:
     linhas = [
         "MelobudsNext - Detecção de Uso",
@@ -166,6 +182,7 @@ def linhas_wear(state) -> list:
         linhas.append(f"3. Desligar ANC ao remover: {state.wear_anc_label()}")
     return linhas
 
+# Tela do toggle de Desligar ANC ao Remover o fone
 def linhas_wear_anc(atual: str) -> list:
     return [
         "MelobudsNext - Desligar ANC ao Remover",
@@ -177,7 +194,8 @@ def linhas_wear_anc(atual: str) -> list:
         _sep(),
         "Enter/outro: voltar",
     ]
-    
+
+# Tela do equilibrio do canal
 def linhas_balance(atual: str) -> list:
     return [
         "MelobudsNext - Equilibrio do Canal",
@@ -191,6 +209,7 @@ def linhas_balance(atual: str) -> list:
         "4. Valor personalizado",
     ]
 
+# Tela do volume de notificacao
 def linhas_tone_vol(atual: str) -> list:
     return [
         "MelobudsNext - Volume de Notificação",
@@ -203,7 +222,8 @@ def linhas_tone_vol(atual: str) -> list:
         _sep(),
         "Enter/outro: voltar",
     ]
-    
+
+# Desenha a caixa completa e devolve o cursor para dentro dela, apos o prompt
 def abrir_caixa(linhas: list, prompt: str) -> None:
     print(_topo())
     for l in linhas:
@@ -215,9 +235,11 @@ def abrir_caixa(linhas: list, prompt: str) -> None:
     col = 2 + len(texto)
     print(f"{ESC}[2A{ESC}[{col}G", end="", flush=True)
 
+# Pula a base ja desenhada para o proximo print nao a sobrescrever
 def fechar_caixa() -> None:
     print(f"{ESC}[1B", end="", flush=True)
 
+# Versao sincrona da pergunta em caixa (setup inicial)
 def perguntar(linhas: list, prompt: str) -> str:
     abrir_caixa(linhas, prompt)
     valor = input()

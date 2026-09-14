@@ -1,4 +1,4 @@
-#src/cli.py
+# src/cli.py
 
 import asyncio
 import os
@@ -11,15 +11,18 @@ from . import menu
 from . import keys
 from .device import MelobudsDevice
 
+# input() em outra thread: o event loop e as notificacoes continuam vivos
 async def input_async(prompt: str = "") -> str:
     return await asyncio.to_thread(input, prompt)
 
+# Desenha a caixa, colhe a resposta digitada dentro dela e devolve o valor
 async def perguntar_async(linhas: list, prompt: str) -> str:
     menu.abrir_caixa(linhas, prompt)
     valor = await input_async()
     menu.fechar_caixa()
     return valor.strip()
 
+# Pede MAC e UUIDs na primeira execucao e salva no config.json
 def _configurar_dispositivo() -> Dict[str, str]:
     limpar_tela()
     print("\n O fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
@@ -48,6 +51,7 @@ def _configurar_dispositivo() -> Dict[str, str]:
         "uuid_notify": uuid_notify,
     }
 
+# Submenu de intensidade do ANC (1 a 3)
 async def _escolher_nivel(quantidade: int) -> Optional[int]:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_nivel(), "Escolha: ")
@@ -55,6 +59,7 @@ async def _escolher_nivel(quantidade: int) -> Optional[int]:
         return int(escolha)
     return None
 
+# Painel do estado atual com opcao de recarregar tudo do fone
 async def _acao_consultar(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
@@ -68,6 +73,7 @@ async def _acao_consultar(dev: MelobudsDevice) -> None:
         else:
             return
 
+# Ativa/desativa o Game Mode (0x09)
 async def _acao_game_mode(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_game_mode(), "Escolha: ")
@@ -81,6 +87,7 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
     else:
         print("Opção inválida.")
 
+# Ativa/desativa o Sleep Mode (0x10)
 async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_sleep_mode(), "Escolha: ")
@@ -94,6 +101,7 @@ async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
     else:
         print("Opção inválida.")
 
+# Ativa/desativa o LDAC (0x23)
 async def _acao_ldac(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_ldac(), "Escolha: ")
@@ -103,6 +111,7 @@ async def _acao_ldac(dev: MelobudsDevice) -> None:
     elif escolha == "2":
         await dev.send_command(commands.ldac(False))
 
+# Menu do ANC: cenas com nivel, vento, adaptativo e transparencia (0x17)
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     limpar_tela()
     escolha = await perguntar_async(menu.linhas_anc(), "Escolha o modo: ")
@@ -149,6 +158,7 @@ async def _acao_anc(dev: "device.MelobudsDevice") -> None:
     await dev.send_command(comando)
     await dev.sync_state()
 
+# Grava um novo nome no fone (0x18)
 async def _acao_renomear(dev: MelobudsDevice) -> None:
     limpar_tela()
     menu.abrir_caixa(
@@ -170,6 +180,7 @@ async def _acao_renomear(dev: MelobudsDevice) -> None:
     dev.state.aplicar(comando)
     print(f"  Comando enviado: novo nome '{novo}'.")
 
+# Edita teclas, desativa tudo ou restaura o mapeamento de touch (char 0000000D)
 async def _acao_touch(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
@@ -193,6 +204,7 @@ async def _acao_touch(dev: MelobudsDevice) -> None:
         else:
             return
 
+# Envia o 0x2C preservando musicIndex/tone e confirma via readback
 async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
     raw = dev.state.wear_raw or (0x00, 0x01, 0x00, 0x00)
     comando = commands.wearing_detection(enable, anc, music_index=raw[1], tone=raw[3])
@@ -202,6 +214,7 @@ async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
     await dev.send_command(commands.request_data(commands.CMD_WEARING))
     await asyncio.sleep(0.8)
 
+# Submenu dos ajustes finos do fone
 async def _acao_ajustes(dev: MelobudsDevice) -> MelobudsDevice:
     while True:
         limpar_tela()
@@ -227,7 +240,7 @@ async def _acao_ajustes(dev: MelobudsDevice) -> MelobudsDevice:
             return
         return dev
 
-
+# Equilibrio esquerdo/direito do audio (0x16)
 async def _acao_balance(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(
@@ -254,6 +267,7 @@ async def _acao_balance(dev: MelobudsDevice) -> None:
     dev.state.aplicar(comando)
     print(f"  Equilibrio ajustado para {valor}.")
 
+# Volume dos tons de notificacao em 4 categorias (0x1D)
 async def _acao_tone_volume(dev: MelobudsDevice) -> None:
     limpar_tela()
     escolha = await perguntar_async(
@@ -269,6 +283,7 @@ async def _acao_tone_volume(dev: MelobudsDevice) -> None:
         commands.request_data(commands.CMD_TONE_VOLUME)
     )
 
+# Tela principal da deteccao de uso, com opcao condicional de ANC ao remover
 async def _acao_wear(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
@@ -281,7 +296,7 @@ async def _acao_wear(dev: MelobudsDevice) -> None:
         else:
             return
 
-
+# Submenu para ligar/desligar o ANC automatico ao remover o fone
 async def _acao_wear_anc(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
@@ -294,6 +309,7 @@ async def _acao_wear_anc(dev: MelobudsDevice) -> None:
         else:
             return
 
+# Instancia o MelobudsDevice com a config salva e conecta
 async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     dev = MelobudsDevice(
         address=cfg["address"],
@@ -306,6 +322,7 @@ async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
     print("Conectado!\n")
     return dev
 
+# Loop principal: redesenha o menu e despacha a opcao escolhida
 async def run() -> None:
     cfg = config.load_config()
     if cfg is None or "address" not in cfg:
@@ -346,8 +363,10 @@ async def run() -> None:
     finally:
         await dev.disconnect()
 
+# Limpa o terminal (cls no Windows, clear nos demais)
 def limpar_tela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+# Entry point sincrono exigido pelo console_scripts
 def main() -> None:
     asyncio.run(run())
