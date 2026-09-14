@@ -202,7 +202,7 @@ async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
     await dev.send_command(commands.request_data(commands.CMD_WEARING))
     await asyncio.sleep(0.8)
 
-async def _acao_ajustes(dev: MelobudsDevice) -> None:
+async def _acao_ajustes(dev: MelobudsDevice) -> MelobudsDevice:
     while True:
         limpar_tela()
         escolha = await perguntar_async(menu.linhas_ajustes(dev.state), "Escolha: ")
@@ -212,7 +212,7 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             await dev.disconnect()
             config.clear_config()
             cfg = _configurar_dispositivo()
-            dev = await _conectar(cfg)
+            return await _conectar(cfg)
         elif escolha == "3":
             await _acao_tone_volume(dev)
         elif escolha == "4":
@@ -225,6 +225,7 @@ async def _acao_ajustes(dev: MelobudsDevice) -> None:
             await _acao_wear(dev)
         else:
             return
+        return dev
 
 
 async def _acao_balance(dev: MelobudsDevice) -> None:
@@ -345,7 +346,7 @@ async def run() -> None:
             elif escolha == "4":
                 await _acao_touch(dev)
             elif escolha == "5":
-                await _acao_ajustes(dev)
+                dev = await _acao_ajustes(dev)
             elif escolha == "6":
                 print("Até mais!")
                 break
