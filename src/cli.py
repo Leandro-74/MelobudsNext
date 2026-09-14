@@ -26,10 +26,12 @@ async def perguntar_async(linhas: list, prompt: str) -> str:
 def _configurar_dispositivo() -> Dict[str, str]:
     limpar_tela()
     print("\n O fone precisa já estar pareado com o Windows (Configurações > Dispositivos > Bluetooth).")
-    endereco = menu.perguntar(
-        "Endereço MAC do fone",
-        "MAC: ",
-    )
+    endereco = ""
+    while not endereco:
+        endereco = menu.perguntar(
+            ["Endereço MAC do fone"],
+            "MAC: ",
+        )
     limpar_tela()
     usar_padrao = menu.perguntar(
         ["Usar os UUIDs padrão já confirmados?"], "[S/n]: "
