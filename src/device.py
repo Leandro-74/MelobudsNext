@@ -106,8 +106,9 @@ class MelobudsDevice:
         try:
             self.state.touch_inicial = await self.ler_touch()
             self.state.touch = dict(self.state.touch_inicial)
-        except Exception:
-            pass
+        except Exception as e:
+           if VERBOSE:
+               print(f"  [Erro] Falha ao ler touch: {e}")
         for cmd_id in (
             commands.CMD_ANC,
             commands.CMD_GAME_MODE,
