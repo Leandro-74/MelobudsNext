@@ -117,7 +117,9 @@ class MelobudsDevice:
             dados = bytes(await self.client.read_gatt_char(UUID_BATTERY_V1))
             self.state.aplicar_bateria(dados)
             return True
-        except Exception:
+        except Exception as e:
+            if VERBOSE:
+                print(f"  [Erro] Falha ao ler bateria: {e}")
             return False
 
     async def atualizar_versao(self) -> bool:
@@ -125,7 +127,9 @@ class MelobudsDevice:
             dados = bytes(await self.client.read_gatt_char(UUID_VERSION_V1))
             self.state.aplicar_versao(dados)
             return True
-        except Exception:
+        except Exception as e:
+            if VERBOSE:
+                print(f"  [Erro] Falha ao ler versao: {e}")
             return False
 
     async def ler_touch(self) -> dict:
