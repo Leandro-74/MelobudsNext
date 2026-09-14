@@ -269,15 +269,6 @@ async def _acao_tone_volume(dev: MelobudsDevice) -> None:
         commands.request_data(commands.CMD_TONE_VOLUME)
     )
 
-async def _enviar_wear(dev: MelobudsDevice, enable: bool, anc: bool) -> None:
-    raw = dev.state.wear_raw or (0x00, 0x01, 0x00, 0x00)
-    comando = commands.wearing_detection(enable, anc, music_index=raw[1], tone=raw[3])
-    await dev.send_command(comando)
-    dev.state.aplicar(comando)
-    await asyncio.sleep(0.5)
-    await dev.send_command(commands.request_data(commands.CMD_WEARING))
-    await asyncio.sleep(0.8)
-
 async def _acao_wear(dev: MelobudsDevice) -> None:
     while True:
         limpar_tela()
