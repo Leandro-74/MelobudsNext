@@ -77,13 +77,17 @@ async def _acao_consultar(dev: MelobudsDevice) -> None:
 # Ativa/desativa o Game Mode (0x09)
 async def _acao_game_mode(dev: MelobudsDevice) -> None:
     limpar_tela()
-    escolha = await perguntar_async(menu.linhas_game_mode(), "Escolha: ")
+    escolha = await perguntar_async(menu.linhas_game_mode(dev.state.game_mode_label()), "Escolha: ")
 
     if escolha == "1":
-        await dev.send_command(commands.game_mode(True))
+        comando = commands.game_mode(True)
+        await dev.send_command(comando)
+        dev.state.aplicar(comando)
         print("Comando enviado: Game Mode ativado.")
     elif escolha == "2":
-        await dev.send_command(commands.game_mode(False))
+        comando = commands.game_mode(False)
+        await dev.send_command(comando)
+        dev.state.aplicar(comando)
         print("Comando enviado: Game Mode desativado.")
     else:
         print("Opção inválida.")
@@ -91,13 +95,17 @@ async def _acao_game_mode(dev: MelobudsDevice) -> None:
 # Ativa/desativa o Sleep Mode (0x10)
 async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
     limpar_tela()
-    escolha = await perguntar_async(menu.linhas_sleep_mode(), "Escolha: ")
+    escolha = await perguntar_async(menu.linhas_sleep_mode(dev.state.sleep_mode_label()), "Escolha: ")
 
     if escolha == "1":
-        await dev.send_command(commands.sleep_mode(True))
+        comando = commands.sleep_mode(True)
+        await dev.send_command(comando)
+        dev.state.aplicar(comando)
         print("Comando enviado: Modo de Sono ativado.")
     elif escolha == "2":
-        await dev.send_command(commands.sleep_mode(False))
+        comando = commands.sleep_mode(False)
+        await dev.send_command(comando)
+        dev.state.aplicar(comando)
         print("Comando enviado: Modo de Sono desativado.")
     else:
         print("Opção inválida.")
@@ -105,7 +113,7 @@ async def _acao_sleep_mode(dev: MelobudsDevice) -> None:
 # Ativa/desativa o LDAC (0x23)
 async def _acao_ldac(dev: MelobudsDevice) -> None:
     limpar_tela()
-    escolha = await perguntar_async(menu.linhas_ldac(), "Escolha: ")
+    escolha = await perguntar_async(menu.linhas_ldac(dev.state.ldac_label()), "Escolha: ")
 
     if escolha == "1":
         await dev.send_command(commands.ldac(True))

@@ -49,27 +49,33 @@ def linhas_rename(nome_atual: str) -> list:
     ]
 
 # Tela do toggle de Game Mode
-def linhas_game_mode() -> list:
+def linhas_game_mode(atual: str) -> list:
     return [
         "MelobudsNext - Modo de Jogo",
+        _sep(),
+        f"Atual: {atual}",
         _sep(),
         "1. Ativar",
         "2. Desativar",
     ]
 
 # Tela do toggle de Sleep Mode
-def linhas_sleep_mode() -> list:
+def linhas_sleep_mode(atual: str) -> list:
     return [
         "MelobudsNext - Modo de Sono",
+        _sep(),
+        f"Atual: {atual}",
         _sep(),
         "1. Ativar",
         "2. Desativar",
     ]
 
 # Tela do toggle de LDAC
-def linhas_ldac() -> list:
+def linhas_ldac(atual: str) -> list:
     return [
         "MelobudsNext - LDAC",
+        _sep(),
+        f"Atual: {atual}",
         _sep(),
         "1. Ativar",
         "2. Desativar",
