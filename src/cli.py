@@ -10,6 +10,7 @@ from . import device
 from . import commands
 from . import menu
 from . import keys
+from . import console
 from .device import MelobudsDevice
 
 # input() em outra thread: o event loop e as notificacoes continuam vivos
@@ -257,7 +258,7 @@ async def _acao_ajustes(dev: MelobudsDevice) -> MelobudsDevice:
         elif escolha == "7":
             await _acao_wear(dev)
         else:
-            return
+            pass
         return dev
 
 # Equilibrio esquerdo/direito do audio (0x16)
@@ -347,6 +348,7 @@ async def _conectar(cfg: Dict[str, str]) -> MelobudsDevice:
 
 # Loop principal: redesenha o menu e despacha a opcao escolhida
 async def run() -> None:
+    console.ajustar_janela()
     cfg = config.load_config()
     if cfg is None or "address" not in cfg:
         print("Nenhum fone configurado ainda.")
