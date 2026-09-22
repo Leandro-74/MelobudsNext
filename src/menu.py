@@ -6,7 +6,7 @@ from . import keys
 from . import state
 
 # Largura interna das caixas e prefixo dos escapes ANSI
-LARGURA = 46
+LARGURA = 56
 ESC = "\x1b"
 
 # Linha de conteudo com bordas e preenchimento a direita
