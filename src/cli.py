@@ -3,6 +3,7 @@
 import asyncio
 import os
 from typing import Dict, Optional
+from bleak.exc import BleakError
 
 from . import config
 from . import device
@@ -121,6 +122,14 @@ async def _acao_ldac(dev: MelobudsDevice) -> None:
         await dev.send_command(commands.ldac(False))
     else:
         print("Opção inválida.")
+        return
+    print (" Comando enviado, o fone irá reiniciar para aplicar")
+    print (" Aguardando o fone voltar...")
+    if await dev.reconectar():
+        print(" Reconectado!")
+    else:
+        print(" Reconexão falhou, tente reiniciar o programa!")
+    await asyncio.sleep(2)
 
 # Menu do ANC: cenas com nivel, vento, adaptativo e transparencia (0x17)
 async def _acao_anc(dev: "device.MelobudsDevice") -> None:
@@ -358,22 +367,32 @@ async def run() -> None:
                 menu.linhas_principal(dev.state.battery_line(), dev.state.nome),
                 "Escolha uma opção: ",
             )
-
-            if escolha == "1":
-                await _acao_anc(dev)
-            elif escolha == "2":
-                await _acao_consultar(dev)
-            elif escolha == "3":
-                await _acao_renomear(dev)
-            elif escolha == "4":
-                await _acao_touch(dev)
-            elif escolha == "5":
-                dev = await _acao_ajustes(dev)
-            elif escolha == "6":
-                print("Até mais!")
-                break
-            else:
-                print("Opção inválida.")
+            try:
+                if escolha == "1":
+                    await _acao_anc(dev)
+                elif escolha == "2":
+                    await _acao_consultar(dev)
+                elif escolha == "3":
+                    await _acao_renomear(dev)
+                elif escolha == "4":
+                    await _acao_touch(dev)
+                elif escolha == "5":
+                    dev = await _acao_ajustes(dev)
+                elif escolha == "6":
+                    print("Até mais!")
+                    break
+                else:
+                    print("Opção inválida.")
+            except (ConnectionError, BleakError, asyncio.TimeoutError) as e:
+                print(f"\n Conexão perdida: {e}")
+                print(" O fone pode ter reiniciado, desligado ou saído do alcance")
+                print(" Tentando reconectar...")
+                if await dev.reconectar():
+                    print(" Reconectado!")
+                    await asyncio.sleep(1.5)
+                else:
+                    print(" Não foi possível reconectar. Encerrando.")
+                    break
     finally:
         await dev.disconnect()
 

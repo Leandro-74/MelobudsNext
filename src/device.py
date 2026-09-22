@@ -36,12 +36,17 @@ class MelobudsDevice:
         self.uuid_notify = uuid_notify
         self.state = DeviceState()
 
-        self.client = BleakClient(address)
+        self.client = BleakClient(
+            address, disconnected_callback=self._on_disconnect
+        )
         self._connected = False
 
         self._char_write: Optional[object] = None
         self._char_notify: Optional[object] = None
 
+    # Marca a conexão como caída quando o link cai
+    def _on_disconnect(self, *args) -> None:
+        self._connected = False
     @property
     # Indica se a conexao BLE esta ativa
     def connected(self) -> bool:
@@ -86,6 +91,25 @@ class MelobudsDevice:
                 pass
             await self.client.disconnect()
             self._connected = False
+
+    # Recria o client e reconecta com tentativas
+    async def reconectar(self, tentativas: int = 10, espera: float = 3.0) -> bool:
+        for _ in range(tentativas):
+            await asyncio.sleep(espera)
+            try:
+                try:
+                    await self.client.disconnect()
+                except Exception:
+                    pass
+                self.client = BleakClient(
+                    self.address, disconnected_callback=self._on_disconnect
+                )
+                self._connected = False
+                await self.connect()
+                return True
+            except Exception:
+                continue
+        return False
 
     # Envia um Command pela characteristic de escrita (write sem resposta)
     async def send_command(self, command: Command) -> None:
