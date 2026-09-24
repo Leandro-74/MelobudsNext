@@ -98,7 +98,7 @@ de atalhos fixa no rodapé. O menu principal já nasce com o nome do fone e a
 bateria por lado:
 
 <p align="center">
-  <img src="assets/TUI_screenshot.png" alt="Logo do MelobudsNext" width="650">
+  <img src="assets/TUI_screenshot.png" alt="menu do MelobudsNext" width="650">
 </p>
 
 ### CLI antigo (legacy)
