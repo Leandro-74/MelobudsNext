@@ -1,7 +1,4 @@
-import asyncio
-from src.cli import run
-import os
-os.system('')
+from src.tui_app import main
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    main()
