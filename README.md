@@ -12,6 +12,10 @@
 > ⚠️ Projeto não oficial, construído por engenharia reversa. Sem vínculo com a
 > QCY. Use por sua conta e risco.
 
+> ℹ️ A interface oficial agora é a **TUI** (Textual). O CLI antigo (caixas
+> ANSI) foi movido para a branch [`legacy/cli`](../../tree/legacy/cli) e não
+> recebe mais novidades.
+
 ## Funcionalidades
 
 | Funcionalidade | Status |
@@ -24,7 +28,9 @@
 | Renomear o fone | ✅ Validado |
 | Personalizar touch | ✅ Validado |
 | Estado ao vivo: mudanças pelo touch ou pelo app oficial refletem na ferramenta | ✅ Validado |
-| Volume, detecção in-ear, auto-desligar, opcodes desconhecidos | 🚧 A explorar |
+| Volume de Notificação | ✅ Validado |
+| Detecção de Uso | ✅ Validado |
+| auto-desligar, opcodes desconhecidos | 🚧 A explorar |
 
 ## Protocolo validado (firmware 2.0.6)
 
@@ -86,30 +92,31 @@ python main.py
 ```
 
 Na primeira execução, informe o endereço MAC do fone (ele fica salvo para as
-próximas). O menu principal já nasce com o nome do fone e a bateria por lado:
+próximas). A interface é uma TUI (Textual): painéis com título na própria
+borda, navegação com setas ou `j`/`k`, `Enter` para selecionar e uma barra
+de atalhos fixa no rodapé. O menu principal já nasce com o nome do fone e a
+bateria por lado:
 
-```
-╔══════════════════════════════════════════════╗
-║ MelobudsNext - Melobuds Pro de Leandro       ║
-║ L: 94% | R: 78%                              ║
-╠══════════════════════════════════════════════╣
-║ 1. Ativar/Desativar Game Mode                ║
-║ 2. Alterar modo ANC                          ║
-║ 3. Consultar estados                         ║
-║ 4. Renomear fone                             ║
-║ 5. Personalizar touch                        ║
-║ 6. Reconfigurar fone (MAC/UUIDs)             ║
-║ 7. Sair                                      ║
-╠══════════════════════════════════════════════╣
-║ Escolha uma opcao:                           ║
-╚══════════════════════════════════════════════╝
+<p align="center">
+  <img src="assets/TUI_screenshot.png" alt="Logo do MelobudsNext" width="650">
+</p>
+
+### CLI antigo (legacy)
+
+O menu em caixas ANSI que existia antes da TUI virar padrão continua
+disponível na branch [`legacy/cli`](../../tree/legacy/cli), sem receber
+novas funcionalidades:
+
+```bash
+git checkout legacy/cli
+python main.py
 ```
 
 ## Estrutura do projeto
 
 ```
 MelobudsNext/
-├── main.py            # ponto de entrada
+├── main.py            # ponto de entrada (TUI)
 ├── requirements.txt
 ├── pyproject.toml
 └── src/
@@ -117,8 +124,7 @@ MelobudsNext/
     ├── keys.py        # protocolo de touch (char 0000000D)
     ├── state.py       # estado ao vivo do fone (nada persistido)
     ├── device.py      # conexão BLE (bleak), sincronização e leituras diretas
-    ├── menu.py        # desenho das caixas e conteúdo dos menus
-    ├── cli.py         # fluxo da interface e ações
+    ├── tui_app.py     # fluxo da interface e ações (TUI, Textual)
     └── config.py      # persistência apenas de MAC/UUIDs
 ```
 
@@ -132,8 +138,6 @@ resolvidas a favor dos bytes.
 
 ## Próximos passos
 
-- Volume (`0x08`), detecção in-ear (`0x06`/`0x2C`), power manager (`0x14`)
-- Explorar opcodes ainda não identificados (`0x10`, `0x1D`, `0x1F`, `0x2C`...)
 - Testes automatizados de parse/montagem de pacotes
 - Testar no Linux e empacotar (.exe / Arch)
 
