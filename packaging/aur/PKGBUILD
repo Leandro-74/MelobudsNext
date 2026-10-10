@@ -1,6 +1,6 @@
 # Maintainer: Leandro <seu-email@exemplo.com>
 pkgname=melobudsnext
-pkgver=1.0.0
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="TUI para controle dos QCY Melobuds Pro via BLE (protocolo por engenharia reversa)"
 arch=('any')
