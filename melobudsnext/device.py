@@ -1,0 +1,197 @@
+# melobuds/device.py
+
+from bleak import BleakClient
+from typing import Optional
+import asyncio
+
+from . import commands
+from . import keys
+from .state import DeviceState
+from .commands import Command
+
+# UUIDs confirmados por captura BLE (sobrescreviveis por instancia)
+DEFAULT_UUID_SERVICE = "0000a001-0000-1000-8000-00805f9b34fb"
+DEFAULT_UUID_WRITE = "00001001-0000-1000-8000-00805f9b34fb"
+DEFAULT_UUID_NOTIFY = "00001002-0000-1000-8000-00805f9b34fb"
+
+# Characteristics V1 de leitura direta (bateria e versao)
+UUID_BATTERY_V1 = "00000008-0000-1000-8000-00805f9b34fb"
+UUID_VERSION_V1 = "00000007-0000-1000-8000-00805f9b34fb"
+
+# Liga/desliga os logs crus de pacotes (modo laboratorio)
+VERBOSE = False
+
+class MelobudsDevice:
+    # Guarda endereco/UUIDs e cria o estado vazio do fone
+    def __init__(
+        self,
+        address: str,
+        uuid_service: str = DEFAULT_UUID_SERVICE,
+        uuid_write: str = DEFAULT_UUID_WRITE,
+        uuid_notify: str = DEFAULT_UUID_NOTIFY,
+    ):
+        self.address = address
+        self.uuid_service = uuid_service
+        self.uuid_write = uuid_write
+        self.uuid_notify = uuid_notify
+        self.state = DeviceState()
+
+        self.client = BleakClient(
+            address, disconnected_callback=self._on_disconnect
+        )
+        self._connected = False
+
+        self._char_write: Optional[object] = None
+        self._char_notify: Optional[object] = None
+
+    # Marca a conexão como caída quando o link cai
+    def _on_disconnect(self, *args) -> None:
+        self._connected = False
+    @property
+    # Indica se a conexao BLE esta ativa
+    def connected(self) -> bool:
+        return self._connected
+
+    # Conecta, resolve as characteristics, ativa notificacoes e sincroniza o estado
+    async def connect(self) -> None:
+        await self.client.connect()
+
+        service = self.client.services.get_service(self.uuid_service)
+        if service is None:
+            await self.client.disconnect()
+            raise ConnectionError(
+                f"Serviço {self.uuid_service} não encontrado."
+                "Verifique o UUID de serviço configurado."
+            )
+
+        self._char_write = service.get_characteristic(self.uuid_write)
+        self._char_notify = service.get_characteristic(self.uuid_notify)
+
+        if self._char_write is None or self._char_notify is None:
+            await self.client.disconnect()
+            raise ConnectionError(
+                f"characteristics não encontradas em {self.uuid_service}."
+                "Verifique os UUIDs configurados."
+            )
+
+        self._connected = True
+
+        await self.client.start_notify(
+            self._char_notify,
+            self._notification_handler
+        )
+        await self.sync_state()
+
+    # Para as notificacoes e desconecta com seguranca
+    async def disconnect(self) -> None:
+        if self._connected:
+            try:
+                await self.client.stop_notify(self._char_notify)
+            except Exception:
+                pass
+            await self.client.disconnect()
+            self._connected = False
+
+    # Recria o client e reconecta com tentativas
+    async def reconectar(self, tentativas: int = 10, espera: float = 3.0) -> bool:
+        for _ in range(tentativas):
+            await asyncio.sleep(espera)
+            try:
+                try:
+                    await self.client.disconnect()
+                except Exception:
+                    pass
+                self.client = BleakClient(
+                    self.address, disconnected_callback=self._on_disconnect
+                )
+                self._connected = False
+                await self.connect()
+                return True
+            except Exception:
+                continue
+        return False
+
+    # Envia um Command pela characteristic de escrita (write sem resposta)
+    async def send_command(self, command: Command) -> None:
+        if not self._connected:
+            raise ConnectionError("Dispositivo não conectado.")
+        
+        packet = command.to_bytes()
+        await self.client.write_gatt_char(
+            self._char_write,
+            packet,
+            response=False
+        )
+
+    # Fotografa o fone ao conectar: leituras diretas + consultas 0xFE
+    async def sync_state(self) -> None:
+        await self.atualizar_bateria()
+        await self.atualizar_versao()
+        try:
+            self.state.touch_inicial = await self.ler_touch()
+            self.state.touch = dict(self.state.touch_inicial)
+        except Exception as e:
+           if VERBOSE:
+               print(f"  [Erro] Falha ao ler touch: {e}")
+        for cmd_id in (
+            commands.CMD_ANC,
+            commands.CMD_GAME_MODE,
+            commands.CMD_SLEEP_MODE,
+            commands.CMD_RENAME,
+            commands.CMD_SOUND_BALANCE,
+            commands.CMD_TONE_VOLUME,
+            commands.CMD_LDAC,
+            commands.CMD_WEARING
+            ):
+            await self.send_command(commands.request_data(cmd_id))
+            await asyncio.sleep(0.05)
+        await asyncio.sleep(1.0)
+
+    # Le L/R direto da characteristic 00000008
+    async def atualizar_bateria(self) -> bool:
+        try:
+            dados = bytes(await self.client.read_gatt_char(UUID_BATTERY_V1))
+            self.state.aplicar_bateria(dados)
+            return True
+        except Exception as e:
+            if VERBOSE:
+                print(f"  [Erro] Falha ao ler bateria: {e}")
+            return False
+
+    # Le o firmware direto da characteristic 00000007
+    async def atualizar_versao(self) -> bool:
+        try:
+            dados = bytes(await self.client.read_gatt_char(UUID_VERSION_V1))
+            self.state.aplicar_versao(dados)
+            return True
+        except Exception as e:
+            if VERBOSE:
+                print(f"  [Erro] Falha ao ler versao: {e}")
+            return False
+
+    # Le o mapeamento cru de touch da characteristic 0000000D
+    async def ler_touch(self) -> dict:
+        data = bytes(await self.client.read_gatt_char(keys.UUID_KEYS))
+        return keys.parse_pairs(data)
+
+    # Grava o mapeamento completo de touch (20 bytes)
+    async def gravar_touch(self, mapping: dict) -> None:
+        await self.client.write_gatt_char(
+            keys.UUID_KEYS, keys.build_bytes(mapping), response=False
+        )
+    
+    # Alimenta o estado com cada pacote recebido (loga se VERBOSE)
+    def _notification_handler(self, sender, data: bytes) -> None:
+        try:
+            parsed_commands = commands.parse_packet(data)
+            if not parsed_commands:
+                if VERBOSE:
+                    print(f"  [Fone] {data.hex('-').upper()} (não reconhecido)")
+                return
+            for cmd in parsed_commands:
+                self.state.aplicar(cmd)
+                if VERBOSE:
+                    event_name = commands.get_event_name(cmd.opcode)
+                    print(f"  [Fone] {event_name}: {cmd}")
+        except Exception as e:
+            print(f"  [Fone][erro] {data.hex('-').upper()} -> {type(e).__name__}: {e}")

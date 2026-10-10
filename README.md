@@ -119,7 +119,7 @@ MelobudsNext/
 ├── main.py            # ponto de entrada (TUI)
 ├── requirements.txt
 ├── pyproject.toml
-└── src/
+└── melobudsnext/
     ├── commands.py    # protocolo: framing, opcodes e fábricas de comandos
     ├── keys.py        # protocolo de touch (char 0000000D)
     ├── state.py       # estado ao vivo do fone (nada persistido)
