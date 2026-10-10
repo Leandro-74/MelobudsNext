@@ -9,13 +9,14 @@ description = "Controle do fone QCY Melobuds Pro via BLE, feito por engenharia r
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
+authors = [{ name = "Leandro" }]
 dependencies = [
     "bleak",
     "textual",
 ]
 
 [project.scripts]
-melobudsnext = "src.tui_app:main"
+melobudsnext = "melobudsnext.tui_app:main"
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["melobudsnext"]
