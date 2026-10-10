@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-melobudsnext = "tui_app:main"
+melobudsnext = "src.tui_app:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["src"]
