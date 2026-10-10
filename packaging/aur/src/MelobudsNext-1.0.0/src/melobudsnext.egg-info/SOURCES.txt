@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-src/melobudsnext.egg-info/PKG-INFO
-src/melobudsnext.egg-info/SOURCES.txt
-src/melobudsnext.egg-info/dependency_links.txt
-src/melobudsnext.egg-info/entry_points.txt
-src/melobudsnext.egg-info/requires.txt
-src/melobudsnext.egg-info/top_level.txt

@@ -1,5 +1,0 @@
-# packaging/aur/melobudsnext.install
-post_install() {
-    echo ">> MelobudsNext instalado. Execute: melobudsnext"
-    echo ">> Requisitos: systemctl enable --now bluetooth  +  fone pareado (bluetoothctl)"
-}
