@@ -1,0 +1,24 @@
+# packaging/aur/PKGBUILD
+# Maintainer: Leandro <seu-email@exemplo.com>
+pkgname=melobudsnext
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="TUI para controle dos QCY Melobuds Pro via BLE (protocolo por engenharia reversa)"
+arch=("any")
+url="https://github.com/Leandro-74/MelobudsNext"
+license=("MIT")
+install=melobudsnext.install
+depends=("python" "bluez-utils" "python-bleak" "python-textual")
+makedepends=("python-build" "python-installer" "python-wheel" "python-setuptools")
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=("SKIP")   # troque por checksum real antes de submeter ao AUR
+
+build() {
+    cd "MelobudsNext-$pkgver"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "MelobudsNext-$pkgver"
+    python -m installer --destdir="$pkgdir" dist/*.whl
+}
