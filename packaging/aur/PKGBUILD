@@ -10,7 +10,7 @@ install=melobudsnext.install
 depends=('python' 'python-bleak' 'python-textual' 'bluez-utils')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP') # troque pelo checksum real: rode `updpkgsums`
+sha256sums=('850cef422dd1c99ce7b844d7a308955df692d54287db31f6c6aad495dd9ae41d')
 
 build() {
     cd "MelobudsNext-$pkgver"
